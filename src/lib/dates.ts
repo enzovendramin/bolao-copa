@@ -1,7 +1,11 @@
-// Todas as datas são armazenadas em UTC e exibidas no horário de Paris
-// (França), onde mora a maioria dos participantes.
+// Todas as datas são armazenadas em UTC e exibidas no fuso configurado em
+// APP_TZ (padrão: Paris, para o bolão da França; o bolão do Brasil usa
+// America/Sao_Paulo via variável de ambiente na Vercel).
 
-const TZ = "Europe/Paris";
+const TZ = process.env.APP_TZ ?? "Europe/Paris";
+
+export const TZ_LABEL =
+  TZ === "America/Sao_Paulo" ? "horário de Brasília" : "horário da França";
 
 export function formatDate(d: Date): string {
   return new Intl.DateTimeFormat("pt-BR", {

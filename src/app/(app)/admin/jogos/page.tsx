@@ -6,7 +6,7 @@ import { Alerts } from "@/components/alerts";
 import { StatusBadge } from "@/components/status-badge";
 import { Flag } from "@/components/flag";
 import { TEAMS, PHASES, teamName, isTracked } from "@/lib/teams";
-import { formatDateTime, toParisInputValue } from "@/lib/dates";
+import { formatDateTime, toParisInputValue, TZ_LABEL } from "@/lib/dates";
 import { matchStatus, isOpenForPredictions, PREDICTION_WINDOW_DAYS } from "@/lib/match-status";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -52,7 +52,7 @@ function MatchFields({ defaults }: { defaults?: { teamA: string; teamB: string; 
         </label>
       </div>
       <label className="text-sm font-medium">
-        Data e horário (horário da França)
+        Data e horário ({TZ_LABEL})
         <input
           type="datetime-local"
           name="kickoff"

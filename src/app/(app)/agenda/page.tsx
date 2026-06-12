@@ -3,30 +3,10 @@ import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition } from "@/lib/queries";
 import { Flag } from "@/components/flag";
 import { teamName, isTracked } from "@/lib/teams";
-import { formatTime } from "@/lib/dates";
+import { formatTime, parisDayKey as dayKey, parisDayLabel as dayLabel, TZ_LABEL } from "@/lib/dates";
 import { matchStatus } from "@/lib/match-status";
 
 export const dynamic = "force-dynamic";
-
-const TZ = "Europe/Paris";
-
-function dayKey(d: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
-}
-
-function dayLabel(d: Date): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: TZ,
-    weekday: "long",
-    day: "2-digit",
-    month: "2-digit",
-  }).format(d);
-}
 
 // Agenda de consulta: todos os jogos cadastrados, agrupados por dia —
 // inclusive os que não valem palpite (sem seleções do bolão).
@@ -116,7 +96,7 @@ export default async function AgendaPage() {
       )}
 
       <p className="text-xs text-slate-400">
-        Horários da França. {`"×"`} sem placar = jogo ainda não finalizado.
+        Exibindo no {TZ_LABEL}. {`"×"`} sem placar = jogo ainda não finalizado.
       </p>
     </div>
   );
