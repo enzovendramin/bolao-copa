@@ -35,8 +35,12 @@ export default async function CadastroPage({
             required
             minLength={3}
             autoComplete="name"
+            placeholder="ex.: João Silva"
             className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-emerald-600"
           />
+          <span className="mt-0.5 block text-xs font-normal text-slate-400">
+            * Preencha apenas nome + sobrenome — é assim que você aparecerá no ranking.
+          </span>
         </label>
         <label className="text-sm font-medium">
           Nome de usuário
