@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// role: ADMIN | PARTICIPANT
+// status: PENDING | APPROVED
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  username       String          @unique
+  passwordHash   String
+  role           String          @default("PARTICIPANT")
+  status         String          @default("PENDING")
+  createdAt      DateTime        @default(now())
+  participations Participation[]
+  predictions    Prediction[]
+}
+
+model Edition {
+  id             String          @id @default(cuid())
+  name           String
+  year           Int
+  isActive       Boolean         @default(false)
+  championTeam   String?         // código da seleção campeã, definido pelo admin ao final
+  // Trava do Chute do Campeão: null = automática (trava quando o primeiro
+  // jogo de mata-mata começa); "LOCKED"/"UNLOCKED" = controle manual do admin.
+  championLockOverride String?
+  matches        Match[]
+  participations Participation[]
+}
+
+// Estatísticas agregadas + posição no ranking, por edição.
+// previousPosition guarda a posição antes do último resultado lançado,
+// para calcular a evolução (⬆ ⬇ ➖).
+model Participation {
+  id               String  @id @default(cuid())
+  userId           String
+  editionId        String
+  points           Int     @default(0)
+  exactCount       Int     @default(0)
+  outcomeCount     Int     @default(0)
+  position         Int?
+  previousPosition Int?
+  championPick     String? // chute do campeão (editável até o 1º jogo da edição)
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  edition          Edition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, editionId])
+}
+
+// teamA/teamB: código ISO da seleção (ex.: "BR", "FR") — ver src/lib/teams.ts
+// Status é derivado: ABERTO (antes do início), FECHADO (após o início, sem
+// resultado) e FINALIZADO (com resultado oficial). Isso garante o bloqueio
+// automático exatamente no horário da partida, sem ação do administrador.
+model Match {
+  id          String       @id @default(cuid())
+  editionId   String
+  teamA       String
+  teamB       String
+  kickoff     DateTime
+  phase       String
+  scoreA      Int?
+  scoreB      Int?
+  // Liberação de palpites: null = automática (abre 7 dias antes do jogo);
+  // "OPEN"/"CLOSED" = controle manual do admin.
+  predictionsOverride String?
+  edition     Edition      @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  predictions Prediction[]
+}
+
+model Prediction {
+  id        String   @id @default(cuid())
+  userId    String
+  matchId   String
+  scoreA    Int
+  scoreB    Int
+  points    Int?
+  isExact   Boolean  @default(false)
+  isOutcome Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId])
+}
