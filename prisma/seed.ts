@@ -15,7 +15,7 @@ async function main() {
   const admin = await db.user.upsert({
     where: { username: "admin" },
     create: {
-      name: "Administrador",
+      name: "Enzo Vendramin",
       username: "admin",
       passwordHash: await bcrypt.hash("admin123", 10),
       role: "ADMIN",
