@@ -2,6 +2,7 @@ import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition, getRankingRows, getChampionLock } from "@/lib/queries";
 import { Podium } from "@/components/podium";
 import { RankingTable } from "@/components/ranking-table";
+import { POINTS_EXACT, POINTS_OUTCOME, POINTS_CHAMPION } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
@@ -32,8 +33,9 @@ export default async function RankingPage() {
       />
 
       <p className="text-xs text-slate-400">
-        🎯 placar exato = 5 pts · ✔ acertou o resultado = 2 pts · 🏆 chute do
-        campeão certo = 10 pts · Empatados ocupam a mesma posição.
+        🎯 placar exato = {POINTS_EXACT} pts · ✔ acertou o resultado ={" "}
+        {POINTS_OUTCOME} pts · 🏆 chute do campeão certo = {POINTS_CHAMPION} pts ·
+        Empatados ocupam a mesma posição.
         {picksVisible && " A bandeira ao lado do nome é o chute do campeão."}
       </p>
     </div>
