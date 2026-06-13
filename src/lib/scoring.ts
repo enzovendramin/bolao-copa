@@ -1,15 +1,22 @@
-// Regras de pontuação do bolão:
-// - Placar exato:                          5 pontos
-// - Acertou vencedor ou empate:            2 pontos
-// - Errou:                                 0 pontos
-// - Chute do campeão (acertou a campeã):  10 pontos (somados ao ranking
-//   quando o admin define a seleção campeã ao final da Copa)
+// Regras de pontuação do bolão (valores padrão; cada servidor pode
+// sobrescrever via variáveis de ambiente, permitindo regras diferentes
+// por bolão sem alterar o código):
+// - Placar exato (SCORE_EXACT, padrão 5)
+// - Acertou vencedor ou empate (SCORE_OUTCOME, padrão 2)
+// - Errou: 0
+// - Chute do campeão (SCORE_CHAMPION, padrão 10), somado ao ranking quando
+//   o admin define a seleção campeã ao final da Copa.
 // Pênaltis não alteram o placar: o resultado oficial registrado já é o do
 // tempo regulamentar + prorrogação.
 
-export const POINTS_EXACT = 5;
-export const POINTS_OUTCOME = 2;
-export const POINTS_CHAMPION = 10;
+const envInt = (value: string | undefined, fallback: number) => {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+};
+
+export const POINTS_EXACT = envInt(process.env.SCORE_EXACT, 5);
+export const POINTS_OUTCOME = envInt(process.env.SCORE_OUTCOME, 2);
+export const POINTS_CHAMPION = envInt(process.env.SCORE_CHAMPION, 10);
 
 export type ScoreResult = {
   points: number;
