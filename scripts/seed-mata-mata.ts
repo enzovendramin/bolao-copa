@@ -27,12 +27,20 @@ const JOGOS: Jogo[] = [
 ];
 
 async function main() {
-  // Trava de segurança: este carregamento é só para o bolão do Brasil.
+  // Trava de segurança: exige confirmar explicitamente a região do banco alvo
+  // (sa-east-1 = Brasil, eu-central-1 = França), evitando atingir o banco
+  // errado por acidente.
   const host = (process.env.DATABASE_URL ?? "").match(/@([^/?]+)/)?.[1] ?? "?";
+  const expected = process.env.EXPECTED_REGION;
   console.log("Banco alvo:", host);
-  if (!host.includes("sa-east-1")) {
+  if (!expected) {
     throw new Error(
-      `ABORTADO: esperado o banco do Brasil (sa-east-1), mas o alvo é "${host}". Defina DATABASE_URL/DIRECT_URL do Neon-BR antes de rodar.`
+      "ABORTADO: defina EXPECTED_REGION (ex.: sa-east-1 para Brasil, eu-central-1 para França) para confirmar o banco alvo."
+    );
+  }
+  if (!host.includes(expected)) {
+    throw new Error(
+      `ABORTADO: esperado a região "${expected}", mas o banco alvo é "${host}".`
     );
   }
 
