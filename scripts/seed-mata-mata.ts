@@ -14,7 +14,8 @@ const db = new PrismaClient();
 
 type Jogo = { a: string; b: string; utc: string; fase: string };
 
-// Rodada de 32 — confrontos definidos até 27/06/2026 (horários em UTC).
+// Rodada de 32 completa — 16 confrontos definidos em 28/06/2026 (horários em
+// UTC). O script é idempotente: os 8 já carregados antes são pulados.
 const JOGOS: Jogo[] = [
   { a: "ZA", b: "CA", utc: "2026-06-28T19:00:00Z", fase: "Rodada de 32" },
   { a: "BR", b: "JP", utc: "2026-06-29T17:00:00Z", fase: "Rodada de 32" },
@@ -22,8 +23,16 @@ const JOGOS: Jogo[] = [
   { a: "NL", b: "MA", utc: "2026-06-30T01:00:00Z", fase: "Rodada de 32" },
   { a: "CI", b: "NO", utc: "2026-06-30T17:00:00Z", fase: "Rodada de 32" },
   { a: "FR", b: "SE", utc: "2026-06-30T21:00:00Z", fase: "Rodada de 32" },
+  { a: "MX", b: "EC", utc: "2026-07-01T01:00:00Z", fase: "Rodada de 32" },
+  { a: "ENG", b: "CD", utc: "2026-07-01T16:00:00Z", fase: "Rodada de 32" },
+  { a: "BE", b: "SN", utc: "2026-07-01T20:00:00Z", fase: "Rodada de 32" },
+  { a: "US", b: "BA", utc: "2026-07-02T00:00:00Z", fase: "Rodada de 32" },
+  { a: "ES", b: "AT", utc: "2026-07-02T19:00:00Z", fase: "Rodada de 32" },
+  { a: "PT", b: "HR", utc: "2026-07-02T23:00:00Z", fase: "Rodada de 32" },
+  { a: "CH", b: "DZ", utc: "2026-07-03T03:00:00Z", fase: "Rodada de 32" },
   { a: "AU", b: "EG", utc: "2026-07-03T18:00:00Z", fase: "Rodada de 32" },
   { a: "AR", b: "CV", utc: "2026-07-03T22:00:00Z", fase: "Rodada de 32" },
+  { a: "CO", b: "GH", utc: "2026-07-04T01:30:00Z", fase: "Rodada de 32" },
 ];
 
 async function main() {
