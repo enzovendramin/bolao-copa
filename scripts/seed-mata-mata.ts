@@ -33,6 +33,15 @@ const JOGOS: Jogo[] = [
   { a: "AU", b: "EG", utc: "2026-07-03T18:00:00Z", fase: "Rodada de 32" },
   { a: "AR", b: "CV", utc: "2026-07-03T22:00:00Z", fase: "Rodada de 32" },
   { a: "CO", b: "GH", utc: "2026-07-04T01:30:00Z", fase: "Rodada de 32" },
+
+  // Oitavas de Final — confrontos definidos em 03/07/2026 (horários em UTC).
+  // Faltam 2 (dependem de jogos da R32 de 03-04/07, incl. Argentina).
+  { a: "CA", b: "MA", utc: "2026-07-04T17:00:00Z", fase: "Oitavas de Final" },
+  { a: "PY", b: "FR", utc: "2026-07-04T21:00:00Z", fase: "Oitavas de Final" },
+  { a: "BR", b: "NO", utc: "2026-07-05T20:00:00Z", fase: "Oitavas de Final" },
+  { a: "MX", b: "ENG", utc: "2026-07-06T00:00:00Z", fase: "Oitavas de Final" },
+  { a: "PT", b: "ES", utc: "2026-07-06T19:00:00Z", fase: "Oitavas de Final" },
+  { a: "US", b: "BE", utc: "2026-07-07T00:00:00Z", fase: "Oitavas de Final" },
 ];
 
 async function main() {
