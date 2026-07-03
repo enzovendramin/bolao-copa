@@ -1,0 +1,422 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[brazil]{babel}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=verde,urlcolor=verde]{hyperref}
+
+% Paleta (verde do app)
+\definecolor{verde}{HTML}{047857}
+\definecolor{verdeclaro}{HTML}{ECFDF5}
+\definecolor{cinza}{HTML}{475569}
+\definecolor{cinzaclaro}{HTML}{F1F5F9}
+
+% Títulos
+\titleformat{\section}{\Large\bfseries\color{verde}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\large\bfseries\color{cinza}}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.4em}{0.6em}
+
+% Cabeçalho/rodapé
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.2pt}
+\lhead{\small\color{cinza}Club Brésil — Bolão da Copa}
+\rhead{\small\color{cinza}Documentação de Arquitetura}
+\cfoot{\small\color{cinza}\thepage}
+
+\newcommand{\caixa}[2]{%
+  \par\medskip\noindent
+  \colorbox{verdeclaro}{\begin{minipage}{\dimexpr\linewidth-2\fboxsep}
+  \textbf{\color{verde}#1}\\[0.3em]#2
+  \end{minipage}}\par\medskip}
+
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\setlist{itemsep=2pt,topsep=3pt}
+
+\begin{document}
+
+% ---------------- CAPA ----------------
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\Huge\bfseries\color{verde} Club Brésil}\\[0.3cm]
+{\Large Bolão da Copa do Mundo 2026}\\[2cm]
+{\huge\bfseries Documentação de Arquitetura}\\[0.5cm]
+{\large Guia completo de tecnologia, hospedagem e funcionamento}\\[3cm]
+\begin{minipage}{0.8\textwidth}
+\centering\color{cinza}
+\large Documento de referência e estudo para apresentar o projeto:
+o que foi construído, com quais tecnologias, onde está hospedado e por quê.
+\end{minipage}
+\vfill
+{\large Enzo Vendramin}\\[0.2cm]
+{\color{cinza} Junho de 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ---------------- 1 ----------------
+\section{Visão geral}
+
+O \textbf{Club Brésil} é uma plataforma web privada de bolão para a Copa do
+Mundo de 2026, pensada para grupos pequenos (cerca de 20 a 50 participantes).
+Substitui planilhas, formulários e mensagens soltas por um produto único,
+moderno e simples, no qual cada participante:
+
+\begin{itemize}
+  \item cria uma conta e aguarda aprovação do administrador;
+  \item registra palpites de placar para os jogos;
+  \item acompanha sua pontuação, o ranking geral e o pódio.
+\end{itemize}
+
+Há um único \textbf{administrador} (você), que aprova participantes, cadastra
+jogos, lança resultados e gerencia o sistema. Existem hoje \textbf{dois bolões
+independentes} rodando com o mesmo código: um para amigos na França e outro
+para amigos no Brasil (detalhes na Seção~\ref{sec:doisboloes}).
+
+\caixa{Princípio de projeto}{Toda decisão priorizou simplicidade, clareza e
+velocidade de uso no celular, mesmo para pessoas sem familiaridade com
+tecnologia. ``Menos é mais'' foi a régua de cada escolha.}
+
+% ---------------- 2 ----------------
+\section{Tecnologias e linguagens}
+
+O projeto usa uma stack moderna e enxuta, na qual \textbf{um único programa}
+cuida tanto da tela (\textit{frontend}) quanto da lógica de servidor
+(\textit{backend}). Isso reduz custo, manutenção e complexidade.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}p{3.6cm} L@{}}
+\toprule
+Camada & Tecnologia e por quê \\
+\midrule
+Linguagem & \textbf{TypeScript} --- JavaScript com tipos. Dá segurança às
+regras de pontuação e aos formulários, evitando erros bobos. \\[4pt]
+Framework & \textbf{Next.js 15} (App Router) sobre \textbf{React 19}. Um só
+projeto para frontend e backend, com renderização no servidor (rápido no
+celular) e \textit{Server Actions} (formulários enviam direto para funções de
+servidor, sem precisar de uma API separada). \\[4pt]
+Estilo & \textbf{Tailwind CSS 4}. Design consistente e responsivo sem
+bibliotecas pesadas de componentes. \\[4pt]
+Banco de dados & \textbf{PostgreSQL} (gerenciado pela Neon) acessado via
+\textbf{Prisma ORM}. O Prisma traduz o banco em código com tipos, e permitiu
+começar em SQLite no desenvolvimento e migrar para PostgreSQL na produção
+mudando praticamente uma linha. \\[4pt]
+Autenticação & Sistema próprio com \textbf{JWT} em cookie (biblioteca
+\texttt{jose}) e senhas protegidas por \textbf{bcrypt}. Sem serviços externos,
+sem custo, sem a complexidade do ``login com Google''. \\[4pt]
+Bandeiras & Imagens do serviço gratuito \textit{flagcdn.com}. Aparecem iguais
+em qualquer aparelho (emojis de bandeira não funcionam no Windows). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\caixa{Por que ``tudo em um'' (Next.js)?}{Em vez de manter um site e um servidor
+de API separados, o Next.js une os dois. Resultado: um único artefato para
+publicar, menos peças que podem quebrar e um aplicativo muito leve
+(aproximadamente 100~kB de JavaScript no navegador), o que o torna rápido até
+em conexões ruins de celular.}
+
+% ---------------- 3 ----------------
+\section{Arquitetura geral}
+
+O caminho de uma ação do usuário, do toque na tela até o banco de dados:
+
+\begin{center}
+\colorbox{cinzaclaro}{\begin{minipage}{\dimexpr\linewidth-2\fboxsep}
+\centering\vspace{4pt}
+\textbf{Celular/navegador} $\;\longrightarrow\;$ \textbf{Vercel} (executa o
+Next.js na região mais próxima) $\;\longrightarrow\;$ \textbf{Server Action}
+(valida permissões e regras) $\;\longrightarrow\;$ \textbf{Prisma}
+$\;\longrightarrow\;$ \textbf{PostgreSQL/Neon}
+\vspace{4pt}
+\end{minipage}}
+\end{center}
+
+\noindent Pontos-chave da arquitetura:
+
+\begin{itemize}
+  \item \textbf{Validação sempre no servidor.} Nenhuma regra depende do
+  navegador: aprovação de usuário, papel de administrador, bloqueio de
+  palpites e pontuação são verificados no servidor a cada ação. O cliente
+  nunca é ``confiável''.
+  \item \textbf{Status do jogo é calculado, nunca armazenado.} ``Aberto'',
+  ``Fechado'' e ``Finalizado'' derivam do horário atual e do placar. Assim, o
+  bloqueio de palpites acontece \textbf{exatamente} no início da partida, sem
+  precisar de nenhuma tarefa agendada.
+  \item \textbf{Pontuação materializada.} Quando o administrador lança um
+  resultado, o sistema calcula e grava os pontos de cada palpite e recalcula o
+  ranking. As telas de leitura ficam, então, triviais e rápidas.
+\end{itemize}
+
+% ---------------- 4 ----------------
+\section{Modelo de dados}
+
+Cinco entidades organizam tudo, sempre separadas por edição (Copa 2026, e
+futuras 2030, 2034\ldots):
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}p{2.8cm} L@{}}
+\toprule
+Entidade & O que guarda \\
+\midrule
+User & Nome (exibido no ranking), nome de usuário (login), senha protegida,
+papel (administrador ou participante) e situação (pendente ou aprovado). \\[4pt]
+Edition & Uma edição do bolão (ex.: Copa 2026), a seleção campeã e a
+configuração de trava do ``chute do campeão''. \\[4pt]
+Match & Um jogo: as duas seleções, data/hora (em UTC), fase, placar oficial e
+o controle de liberação de palpites. \\[4pt]
+Prediction & O palpite de um usuário em um jogo (gols A e B) e os pontos já
+calculados. Único por usuário e jogo. \\[4pt]
+Participation & Liga um usuário a uma edição e guarda seus totais: pontos,
+placares exatos, acertos, posição atual, posição anterior (para a evolução) e
+o chute do campeão. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ---------------- 5 ----------------
+\section{Regras de negócio}
+
+\subsection{Pontuação}
+A pontuação é \textbf{configurável por bolão} (ver Seção~\ref{sec:doisboloes}).
+A regra geral:
+
+\begin{itemize}
+  \item \textbf{Placar exato} (acertou os gols dos dois lados): pontuação cheia;
+  \item \textbf{Acertou o resultado} (quem venceu, ou empate, sem o placar
+  exato): pontuação menor;
+  \item \textbf{Errou:} zero;
+  \item \textbf{Chute do campeão} (acertar quem levanta a taça): bônus
+  somado ao ranking quando o administrador define a campeã.
+\end{itemize}
+
+As duas primeiras regras \textbf{não somam}: quem acerta o placar exato recebe
+a pontuação cheia, que já inclui ter acertado o vencedor.
+
+\caixa{Mata-mata e pênaltis}{Conta apenas o placar do tempo regulamentar mais
+prorrogação. Disputa por pênaltis não altera o placar para fins de pontuação:
+um $1\times1$ decidido nos pênaltis continua sendo empate.}
+
+\subsection{Bloqueio e edição de palpites}
+Cada jogo abre para palpites automaticamente alguns dias antes (evitando uma
+tela enorme de uma vez) e \textbf{trava no horário exato do apito inicial}.
+Antes disso, o participante pode editar livremente, a qualquer momento e aos
+poucos. O administrador também pode liberar ou bloquear manualmente cada jogo.
+
+\subsection{Visibilidade dos palpites}
+Antes do início da partida, ninguém vê o palpite dos outros. A partir do apito
+inicial, os palpites de todos ficam visíveis (na aba Histórico, em um clique
+expansível) --- e assim permanecem após o fim do jogo, aumentando a
+transparência.
+
+\subsection{Ranking e empates}
+O ranking é recalculado automaticamente a cada resultado lançado. Em caso de
+empate de pontos, ambos ocupam a \textbf{mesma posição} (ex.: 1º, 1º, 3º), sem
+critérios de desempate. O sistema guarda a posição anterior para mostrar a
+evolução ($\uparrow$, $\downarrow$ ou estável) a cada rodada.
+
+% ---------------- 6 ----------------
+\section{Estrutura de telas}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}p{2.6cm} L@{}}
+\toprule
+\normalfont\bfseries Rota & Função \\
+\midrule
+/ & Página pública (sem login): pódio, ranking e resultados. \\
+/entrar, /cadastro & Login e criação de conta. \\
+/aguardando & Tela de espera até a aprovação do administrador. \\
+/inicio & Próximo jogo, palpites pendentes, pódio e ranking resumido. \\
+/palpites & Jogos abertos, agrupados por dia; ``Salvar todos os palpites''. \\
+/ranking & Pódio e tabela completa com evolução. \\
+/historico & Jogos iniciados, seu palpite, pontos e palpites de todos. \\
+/agenda & Todos os jogos da Copa, dia a dia (inclusive os que não valem
+palpite), como consulta. \\
+/senha & Trocar a própria senha. \\
+/admin/* & Painel: participantes, jogos, resultados e visão de palpites. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent A navegação principal é uma barra inferior fixa (padrão de aplicativo
+nativo), com campos e botões grandes, teclado numérico automático nos placares
+e respeito à área segura do iPhone. Tudo \textbf{mobile-first}.
+
+% ---------------- 7 ----------------
+\section{Autenticação e segurança}
+
+\begin{itemize}
+  \item \textbf{Login} por nome de usuário e senha; senhas guardadas como
+  \textit{hash} bcrypt (nunca em texto puro).
+  \item \textbf{Sessão} em cookie \texttt{httpOnly} assinado (JWT), válido por
+  30 dias --- não acessível por scripts no navegador.
+  \item \textbf{Aprovação manual:} novos cadastros ficam pendentes até o
+  administrador aprovar.
+  \item \textbf{Limite de tentativas} de login (proteção contra adivinhação de
+  senha) e \textbf{cabeçalhos de segurança} (anti-\textit{clickjacking}, etc.).
+  \item \textbf{HTTPS} automático em produção.
+  \item A página pública não expõe dados privados --- apenas nome e pontuação.
+\end{itemize}
+
+% ---------------- 8 ----------------
+\section{Hospedagem e infraestrutura}\label{sec:hosting}
+
+Três serviços, todos no \textbf{plano gratuito}:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}p{2.6cm} p{3.2cm} L@{}}
+\toprule
+Serviço & Papel & Por que esse \\
+\midrule
+GitHub & Guarda o código-fonte (repositório privado). & Padrão da indústria;
+integra-se à Vercel para publicar automaticamente. \\[4pt]
+Vercel & Hospeda e executa o aplicativo. & É a criadora do Next.js (encaixe
+perfeito), com HTTPS e rede global automáticos. Publica sozinha a cada
+atualização do código. \\[4pt]
+Neon & Banco de dados PostgreSQL gerenciado. & PostgreSQL ``sem servidor'',
+com plano gratuito generoso e backups; funciona bem com a Vercel. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\caixa{Por que não foi usado SQLite em produção?}{No desenvolvimento, o banco
+era um simples arquivo (SQLite) --- ótimo para testar localmente. Mas a Vercel
+executa o código em ambiente ``sem servidor'', onde não há um disco fixo para
+guardar esse arquivo. Por isso a produção usa PostgreSQL (Neon), um banco de
+verdade acessível pela rede. A troca custou praticamente uma linha de
+configuração, graças ao Prisma.}
+
+\caixa{A lição da latência}{No primeiro deploy, o código rodava nos EUA e o
+banco na Europa: cada tela cruzava o Atlântico várias vezes e demorava
+$\approx$2,2~s. Ao fixar a execução na \textbf{mesma região} do banco e dos
+usuários, o tempo caiu para $\approx$0,15~s --- cerca de 10$\times$ mais rápido.
+Daí a importância de código e banco ficarem geograficamente juntos.}
+
+% ---------------- 9 ----------------
+\section{Os dois bolões: França e Brasil}\label{sec:doisboloes}
+
+O \textbf{mesmo código} alimenta dois bolões totalmente independentes (dados,
+participantes e rankings separados). As diferenças vêm apenas de configuração,
+não de código duplicado:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}p{3.2cm} L L@{}}
+\toprule
+& \textbf{Bolão França} & \textbf{Bolão Brasil} \\
+\midrule
+Servidor (Vercel) & Frankfurt (\texttt{fra1}) & São Paulo (\texttt{gru1}) \\
+Banco (Neon) & Frankfurt (UE) & São Paulo (BR) \\
+Fuso exibido & Horário de Paris & Horário de Brasília \\
+Placar exato & 3 pontos & 5 pontos \\
+Acertar resultado & 1 ponto & 2 pontos \\
+Chute do campeão & 10 pontos & 10 pontos \\
+Web Analytics & Ativado & Desativado \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Tecnicamente, cada bolão é um \textit{projeto} separado na Vercel,
+ligado a uma \textit{branch} do mesmo repositório (\texttt{main} para a França,
+\texttt{brasil} para o Brasil) e a um banco Neon próprio. Comportamentos como
+fuso horário e pontuação são lidos de \textbf{variáveis de ambiente}
+(\texttt{APP\_TZ}, \texttt{SCORE\_EXACT}, \texttt{SCORE\_OUTCOME},
+\texttt{NEXT\_PUBLIC\_ANALYTICS}) --- por isso o mesmo código se comporta
+diferente em cada lugar, sem precisar mantê-los à parte.
+
+\caixa{Um não atrapalha o outro}{Por serem projetos e bancos separados, os dois
+bolões não compartilham servidor nem dados. Carga, lentidão ou qualquer
+problema em um \textbf{não afeta} o outro.}
+
+% ---------------- 10 ----------------
+\section{Fluxo de atualização (publicação)}
+
+O desenvolvimento e a publicação seguem um ciclo simples e seguro:
+
+\begin{enumerate}
+  \item A alteração é feita e testada \textbf{localmente} (no computador), sem
+  afetar os sites no ar.
+  \item Ao enviar o código para o GitHub (\texttt{git push}), a Vercel
+  \textbf{detecta e publica} a nova versão em $\approx$2~minutos,
+  \textbf{sem derrubar o site e sem tocar nos dados} (que vivem no banco,
+  separados do código).
+  \item Mudanças arriscadas podem ser testadas antes em uma \textbf{URL de
+  prévia} (cópia isolada que a Vercel gera automaticamente).
+  \item Se algo der errado, a Vercel permite \textbf{reverter} para a versão
+  anterior em segundos.
+\end{enumerate}
+
+\noindent Melhorias comuns são aplicadas à França e replicadas ao Brasil com a
+junção das \textit{branches}; cada site se atualiza na sua região.
+
+% ---------------- 11 ----------------
+\section{Web Analytics}
+
+O bolão da França usa o \textbf{Web Analytics} da Vercel (gratuito): mostra
+número de visitantes, páginas mais acessadas, país e tipo de aparelho. É
+\textbf{amigável à privacidade} --- não usa cookies nem identifica indivíduos,
+adequado às regras de privacidade da União Europeia. É ativado apenas onde a
+variável \texttt{NEXT\_PUBLIC\_ANALYTICS} está definida.
+
+% ---------------- 12 ----------------
+\section{Custos}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L >{\bfseries}r@{}}
+\toprule
+\normalfont Item & Custo \\
+\midrule
+GitHub (repositório privado) & R\$ 0 \\
+Vercel (2 projetos, plano Hobby) & R\$ 0 \\
+Neon (2 bancos, plano Free) & R\$ 0 \\
+\midrule
+\normalfont\bfseries Total mensal & R\$ 0 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Os planos gratuitos comportam, com folga, dois grupos de 20 a 50
+pessoas. O modelo só precisaria de plano pago se o número de usuários crescesse
+muito (centenas de milhares de acessos), o que não é o caso.
+
+% ---------------- 13 ----------------
+\section{Glossário}
+
+\begin{description}[leftmargin=0pt,style=nextline]
+  \item[Frontend] A parte visível: as telas com que o usuário interage.
+  \item[Backend] A parte invisível: a lógica de servidor e o acesso ao banco.
+  \item[Framework] Conjunto de ferramentas que estrutura o desenvolvimento
+  (aqui, o Next.js).
+  \item[ORM] Tradutor entre o banco de dados e o código (aqui, o Prisma).
+  \item[Server Action] Função de servidor chamada diretamente por um
+  formulário, sem uma API separada.
+  \item[Deploy] Publicar uma nova versão do aplicativo no ar.
+  \item[Branch] Uma ``linha'' de código no Git; usamos uma para cada bolão.
+  \item[Variável de ambiente] Configuração definida fora do código (ex.: fuso,
+  pontuação), que muda o comportamento sem alterar o programa.
+  \item[Serverless] Modelo em que o provedor executa o código sob demanda, sem
+  um servidor fixo a administrar.
+  \item[JWT] ``Crachá'' digital assinado que comprova a sessão do usuário.
+  \item[Hash (bcrypt)] Transformação irreversível da senha, para nunca
+  guardá-la em texto puro.
+\end{description}
+
+\vfill
+\begin{center}
+\color{cinza}\small
+Club Brésil --- Bolão da Copa 2026 \quad$\bullet$\quad criado por Enzo Vendramin
+\end{center}
+
+\end{document}

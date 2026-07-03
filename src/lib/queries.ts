@@ -47,12 +47,15 @@ export const getChampionLock = cache(async (editionId: string): Promise<Champion
   return { locked, deadline, mode };
 });
 
-// Apenas jogos com ao menos uma seleção do bolão valem palpite/pontos.
-// Os demais jogos cadastrados aparecem somente na Agenda.
+// Jogos que valem palpite/pontos: envolvem uma das 6 seleções OU são de
+// mata-mata (qualquer fase != "Fase de Grupos"). Os demais só aparecem na
+// Agenda. Equivale à função matchCountsForPool (src/lib/teams.ts) — manter
+// os dois em sincronia.
 export const POOL_MATCH_FILTER = {
   OR: [
     { teamA: { in: [...TRACKED_CODES] } },
     { teamB: { in: [...TRACKED_CODES] } },
+    { phase: { not: "Fase de Grupos" } },
   ],
 };
 

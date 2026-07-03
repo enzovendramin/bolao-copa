@@ -1,13 +1,15 @@
 import "server-only";
 import { db } from "./db";
 import { scorePrediction, POINTS_CHAMPION } from "./scoring";
-import { isTracked, TRACKED_CODES } from "./teams";
+import { matchCountsForPool, TRACKED_CODES } from "./teams";
 
-// Apenas jogos com seleção do bolão pontuam (os demais são só Agenda).
+// Jogos que pontuam: com seleção do bolão OU de mata-mata (ver
+// matchCountsForPool). Os demais são só Agenda.
 const POOL_FILTER = {
   OR: [
     { teamA: { in: [...TRACKED_CODES] } },
     { teamB: { in: [...TRACKED_CODES] } },
+    { phase: { not: "Fase de Grupos" } },
   ],
 };
 
@@ -18,7 +20,7 @@ export async function rescoreMatch(matchId: string) {
     include: { predictions: true },
   });
   if (!match || match.scoreA === null || match.scoreB === null) return;
-  if (!isTracked(match.teamA) && !isTracked(match.teamB)) return;
+  if (!matchCountsForPool(match)) return;
 
   for (const p of match.predictions) {
     const r = scorePrediction(p.scoreA, p.scoreB, match.scoreA, match.scoreB);

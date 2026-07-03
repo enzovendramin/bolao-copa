@@ -7,6 +7,7 @@ import {
   matchStatus,
   PREDICTION_WINDOW_DAYS,
 } from "../src/lib/match-status";
+import { matchCountsForPool } from "../src/lib/teams";
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error("FALHOU: " + msg);
@@ -79,6 +80,26 @@ assert(matchStatus(mk(-0.1), now) === "FECHADO", "iniciado sem placar: FECHADO")
 assert(
   matchStatus({ ...mk(-1), scoreA: 2, scoreB: 1 }, now) === "FINALIZADO",
   "com placar oficial: FINALIZADO"
+);
+
+// ---------- O que vale palpite/pontos (matchCountsForPool) ----------
+const grupos = "Fase de Grupos";
+const oitavas = "Oitavas de Final";
+assert(
+  matchCountsForPool({ teamA: "BR", teamB: "MA", phase: grupos }) === true,
+  "grupos com seleção do bolão: conta"
+);
+assert(
+  matchCountsForPool({ teamA: "MX", teamB: "EC", phase: grupos }) === false,
+  "grupos sem seleção do bolão: NÃO conta (só Agenda)"
+);
+assert(
+  matchCountsForPool({ teamA: "CA", teamB: "MA", phase: oitavas }) === true,
+  "mata-mata sem seleção do bolão: AGORA conta (nova regra)"
+);
+assert(
+  matchCountsForPool({ teamA: "BR", teamB: "NO", phase: oitavas }) === true,
+  "mata-mata com seleção do bolão: conta"
 );
 
 console.log("\nTodos os testes de rotina passaram.");

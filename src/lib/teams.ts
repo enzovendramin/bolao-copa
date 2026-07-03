@@ -89,6 +89,19 @@ export function isTracked(code: string): boolean {
   return (TRACKED_CODES as readonly string[]).includes(code);
 }
 
+// Um jogo vale palpite/pontos ("conta para o bolão") se:
+// - envolver ao menos uma das 6 seleções do bolão, OU
+// - for um jogo de mata-mata (qualquer fase que não seja a de grupos).
+// Regra única do sistema — o filtro Prisma equivalente é POOL_MATCH_FILTER
+// (src/lib/queries.ts). Manter os dois em sincronia.
+export function matchCountsForPool(m: {
+  teamA: string;
+  teamB: string;
+  phase: string;
+}): boolean {
+  return isTracked(m.teamA) || isTracked(m.teamB) || m.phase !== "Fase de Grupos";
+}
+
 export const PHASES = [
   "Fase de Grupos",
   "Rodada de 32",
