@@ -1,15 +1,15 @@
 import "server-only";
 import { db } from "./db";
 import { scorePrediction, POINTS_CHAMPION } from "./scoring";
-import { matchCountsForPool, TRACKED_CODES } from "./teams";
+import { matchCountsForPool, TRACKED_CODES, OPEN_POOL_PHASES } from "./teams";
 
-// Jogos que pontuam: com seleção do bolão OU de mata-mata (ver
-// matchCountsForPool). Os demais são só Agenda.
+// Jogos que pontuam: com seleção do bolão OU de fase aberta (Oitavas em
+// diante) — ver matchCountsForPool. Os demais são só Agenda.
 const POOL_FILTER = {
   OR: [
     { teamA: { in: [...TRACKED_CODES] } },
     { teamB: { in: [...TRACKED_CODES] } },
-    { phase: { not: "Fase de Grupos" } },
+    { phase: { in: [...OPEN_POOL_PHASES] } },
   ],
 };
 

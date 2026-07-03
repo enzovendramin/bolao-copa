@@ -89,9 +89,21 @@ export function isTracked(code: string): boolean {
   return (TRACKED_CODES as readonly string[]).includes(code);
 }
 
+// Fases em que TODO jogo vale palpite/pontos, independentemente das 6
+// seleções (a "abertura" combinada). Começa nas Oitavas — a Fase de Grupos
+// E a Rodada de 32 ficam de fora de propósito: nelas vale a regra normal
+// (só jogos com uma das 6 seleções contam).
+export const OPEN_POOL_PHASES: readonly string[] = [
+  "Oitavas de Final",
+  "Quartas de Final",
+  "Semifinal",
+  "Disputa de 3º Lugar",
+  "Final",
+];
+
 // Um jogo vale palpite/pontos ("conta para o bolão") se:
 // - envolver ao menos uma das 6 seleções do bolão, OU
-// - for um jogo de mata-mata (qualquer fase que não seja a de grupos).
+// - for de uma fase "aberta" (Oitavas em diante).
 // Regra única do sistema — o filtro Prisma equivalente é POOL_MATCH_FILTER
 // (src/lib/queries.ts). Manter os dois em sincronia.
 export function matchCountsForPool(m: {
@@ -99,7 +111,9 @@ export function matchCountsForPool(m: {
   teamB: string;
   phase: string;
 }): boolean {
-  return isTracked(m.teamA) || isTracked(m.teamB) || m.phase !== "Fase de Grupos";
+  return (
+    isTracked(m.teamA) || isTracked(m.teamB) || OPEN_POOL_PHASES.includes(m.phase)
+  );
 }
 
 export const PHASES = [

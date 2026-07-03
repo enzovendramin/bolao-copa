@@ -84,6 +84,7 @@ assert(
 
 // ---------- O que vale palpite/pontos (matchCountsForPool) ----------
 const grupos = "Fase de Grupos";
+const r32 = "Rodada de 32";
 const oitavas = "Oitavas de Final";
 assert(
   matchCountsForPool({ teamA: "BR", teamB: "MA", phase: grupos }) === true,
@@ -94,12 +95,20 @@ assert(
   "grupos sem seleção do bolão: NÃO conta (só Agenda)"
 );
 assert(
+  matchCountsForPool({ teamA: "CO", teamB: "GH", phase: r32 }) === false,
+  "Rodada de 32 sem seleção do bolão: NÃO conta (só as 6 seleções na R32)"
+);
+assert(
+  matchCountsForPool({ teamA: "AR", teamB: "CV", phase: r32 }) === true,
+  "Rodada de 32 com seleção do bolão: conta"
+);
+assert(
   matchCountsForPool({ teamA: "CA", teamB: "MA", phase: oitavas }) === true,
-  "mata-mata sem seleção do bolão: AGORA conta (nova regra)"
+  "Oitavas sem seleção do bolão: conta (abertura a partir das Oitavas)"
 );
 assert(
   matchCountsForPool({ teamA: "BR", teamB: "NO", phase: oitavas }) === true,
-  "mata-mata com seleção do bolão: conta"
+  "Oitavas com seleção do bolão: conta"
 );
 
 console.log("\nTodos os testes de rotina passaram.");
