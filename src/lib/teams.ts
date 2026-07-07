@@ -89,17 +89,26 @@ export function isTracked(code: string): boolean {
   return (TRACKED_CODES as readonly string[]).includes(code);
 }
 
-// Fases em que TODO jogo vale palpite/pontos, independentemente das 6
-// seleções (a "abertura" combinada). Começa nas Oitavas — a Fase de Grupos
-// E a Rodada de 32 ficam de fora de propósito: nelas vale a regra normal
-// (só jogos com uma das 6 seleções contam).
-export const OPEN_POOL_PHASES: readonly string[] = [
+// Ordem das fases do mata-mata em que a "abertura" pode começar. A Fase de
+// Grupos e a Rodada de 32 nunca entram: nelas vale sempre a regra das 6
+// seleções.
+const KNOCKOUT_ORDER = [
   "Oitavas de Final",
   "Quartas de Final",
   "Semifinal",
   "Disputa de 3º Lugar",
   "Final",
-];
+] as const;
+
+// Fases em que TODO jogo vale palpite/pontos, independentemente das 6
+// seleções. Configurável por bolão via env OPEN_FROM_PHASE (padrão: começa
+// nas Oitavas). Ex.: OPEN_FROM_PHASE="Quartas de Final" abre só das Quartas
+// em diante; as Oitavas seguem valendo só para as 6 seleções.
+export const OPEN_POOL_PHASES: readonly string[] = (() => {
+  const from = process.env.OPEN_FROM_PHASE ?? "Oitavas de Final";
+  const idx = KNOCKOUT_ORDER.indexOf(from as (typeof KNOCKOUT_ORDER)[number]);
+  return idx >= 0 ? KNOCKOUT_ORDER.slice(idx) : [...KNOCKOUT_ORDER];
+})();
 
 // Um jogo vale palpite/pontos ("conta para o bolão") se:
 // - envolver ao menos uma das 6 seleções do bolão, OU
