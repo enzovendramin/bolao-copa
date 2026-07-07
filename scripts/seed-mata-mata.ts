@@ -34,14 +34,20 @@ const JOGOS: Jogo[] = [
   { a: "AR", b: "CV", utc: "2026-07-03T22:00:00Z", fase: "Rodada de 32" },
   { a: "CO", b: "GH", utc: "2026-07-04T01:30:00Z", fase: "Rodada de 32" },
 
-  // Oitavas de Final — confrontos definidos em 03/07/2026 (horários em UTC).
-  // Faltam 2 (dependem de jogos da R32 de 03-04/07, incl. Argentina).
+  // Oitavas de Final — 8 confrontos (horários em UTC).
   { a: "CA", b: "MA", utc: "2026-07-04T17:00:00Z", fase: "Oitavas de Final" },
   { a: "PY", b: "FR", utc: "2026-07-04T21:00:00Z", fase: "Oitavas de Final" },
   { a: "BR", b: "NO", utc: "2026-07-05T20:00:00Z", fase: "Oitavas de Final" },
   { a: "MX", b: "ENG", utc: "2026-07-06T00:00:00Z", fase: "Oitavas de Final" },
   { a: "PT", b: "ES", utc: "2026-07-06T19:00:00Z", fase: "Oitavas de Final" },
   { a: "US", b: "BE", utc: "2026-07-07T00:00:00Z", fase: "Oitavas de Final" },
+  { a: "AR", b: "EG", utc: "2026-07-07T16:00:00Z", fase: "Oitavas de Final" },
+  { a: "CH", b: "CO", utc: "2026-07-07T20:00:00Z", fase: "Oitavas de Final" },
+
+  // Quartas de Final — confrontos definidos em 06/07/2026 (horários em UTC).
+  // Faltam 2 (dependem de jogos das Oitavas de 06-07/07).
+  { a: "FR", b: "MA", utc: "2026-07-09T20:00:00Z", fase: "Quartas de Final" },
+  { a: "NO", b: "ENG", utc: "2026-07-11T21:00:00Z", fase: "Quartas de Final" },
 ];
 
 async function main() {
