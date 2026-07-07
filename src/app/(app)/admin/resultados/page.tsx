@@ -5,7 +5,7 @@ import { saveResult, setChampion, setChampionLock } from "@/actions/admin";
 import { getChampionLock } from "@/lib/queries";
 import { Alerts } from "@/components/alerts";
 import { Flag } from "@/components/flag";
-import { TEAMS, teamName, isTracked } from "@/lib/teams";
+import { TEAMS, teamName, matchCountsForPool } from "@/lib/teams";
 import { formatDateTime } from "@/lib/dates";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -30,8 +30,8 @@ export default async function AdminResultadosPage({
     where: { editionId: edition.id, kickoff: { lte: new Date() } },
     orderBy: { kickoff: "desc" },
   });
-  const poolMatches = matches.filter((m) => isTracked(m.teamA) || isTracked(m.teamB));
-  const agendaMatches = matches.filter((m) => !isTracked(m.teamA) && !isTracked(m.teamB));
+  const poolMatches = matches.filter(matchCountsForPool);
+  const agendaMatches = matches.filter((m) => !matchCountsForPool(m));
 
   return (
     <div className="flex flex-col gap-4">

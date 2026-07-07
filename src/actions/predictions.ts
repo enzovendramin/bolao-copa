@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { requireApprovedUser } from "@/lib/auth";
 import { isOpenForPredictions } from "@/lib/match-status";
 import { getChampionLock } from "@/lib/queries";
-import { TEAMS, isTracked } from "@/lib/teams";
+import { TEAMS, matchCountsForPool } from "@/lib/teams";
 
 // Salva todos os palpites enviados de uma vez (botão "Salvar todos os palpites").
 // Campos esperados: m_<matchId>_a e m_<matchId>_b.
@@ -37,8 +37,8 @@ export async function saveAllPredictions(formData: FormData) {
 
     const match = await db.match.findUnique({ where: { id: matchId } });
     if (!match || !isOpenForPredictions(match, now)) continue;
-    // Jogos sem seleção do bolão (só Agenda) não recebem palpite.
-    if (!isTracked(match.teamA) && !isTracked(match.teamB)) continue;
+    // Jogos que não contam para o bolão (só Agenda) não recebem palpite.
+    if (!matchCountsForPool(match)) continue;
 
     await db.prediction.upsert({
       where: { userId_matchId: { userId: user.id, matchId } },

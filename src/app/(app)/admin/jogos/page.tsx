@@ -5,7 +5,7 @@ import { createMatch, updateMatch, deleteMatch, setMatchPredictions } from "@/ac
 import { Alerts } from "@/components/alerts";
 import { StatusBadge } from "@/components/status-badge";
 import { Flag } from "@/components/flag";
-import { TEAMS, PHASES, teamName, isTracked } from "@/lib/teams";
+import { TEAMS, PHASES, teamName, isTracked, matchCountsForPool } from "@/lib/teams";
 import { formatDateTime, toParisInputValue, TZ_LABEL } from "@/lib/dates";
 import { matchStatus, isOpenForPredictions, PREDICTION_WINDOW_DAYS } from "@/lib/match-status";
 import { SubmitButton } from "@/components/submit-button";
@@ -90,8 +90,8 @@ export default async function AdminJogosPage({
     orderBy: { kickoff: "asc" },
   });
   const now = new Date();
-  const poolMatches = matches.filter((m) => isTracked(m.teamA) || isTracked(m.teamB));
-  const agendaMatches = matches.filter((m) => !isTracked(m.teamA) && !isTracked(m.teamB));
+  const poolMatches = matches.filter(matchCountsForPool);
+  const agendaMatches = matches.filter((m) => !matchCountsForPool(m));
 
   return (
     <div className="flex flex-col gap-5">

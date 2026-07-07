@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition } from "@/lib/queries";
 import { Flag } from "@/components/flag";
-import { teamName, isTracked, PHASES } from "@/lib/teams";
+import { teamName, matchCountsForPool, PHASES } from "@/lib/teams";
 import {
   formatTime,
   formatDate,
@@ -22,13 +22,14 @@ type MatchRow = {
   kickoff: Date;
   scoreA: number | null;
   scoreB: number | null;
+  phase: string;
 };
 
 // Linha de um jogo. showDate inclui a data (usado na visão por fase, que não
 // é agrupada por dia).
 function JogoLinha({ m, showDate = false }: { m: MatchRow; showDate?: boolean }) {
   const status = matchStatus(m);
-  const pool = isTracked(m.teamA) || isTracked(m.teamB);
+  const pool = matchCountsForPool(m);
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
       <span className="w-14 shrink-0 text-xs font-semibold leading-tight text-slate-600">

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { PHASES, TEAMS, isTracked } from "@/lib/teams";
+import { PHASES, TEAMS, matchCountsForPool } from "@/lib/teams";
 import { parseParisDateTime } from "@/lib/dates";
 import { applyResult, recalcRanking } from "@/lib/ranking";
 
@@ -220,7 +220,7 @@ export async function saveResult(formData: FormData) {
   await db.match.update({ where: { id: matchId }, data: { scoreA, scoreB } });
   await applyResult(matchId, match.editionId);
   revalidateAll();
-  const msg = isTracked(match.teamA) || isTracked(match.teamB)
+  const msg = matchCountsForPool(match)
     ? "Resultado salvo. Pontuações e ranking atualizados."
     : "Placar salvo na Agenda (jogo não pontua no bolão).";
   redirect(`/admin/resultados?ok=${encodeURIComponent(msg)}`);
