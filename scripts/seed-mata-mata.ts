@@ -8,7 +8,7 @@
 // Jogos sem nenhuma das 6 seleções entram só na Agenda (não valem palpite);
 // isso é decidido automaticamente pelo app.
 import { PrismaClient } from "@prisma/client";
-import { teamName, isTracked } from "../src/lib/teams";
+import { teamName, matchCountsForPool } from "../src/lib/teams";
 
 const db = new PrismaClient();
 
@@ -89,7 +89,11 @@ async function main() {
         phase: j.fase,
       },
     });
-    const tag = isTracked(j.a) || isTracked(j.b) ? "VALE PALPITE" : "só Agenda";
+    // Reflete a regra real do bolão-alvo. Para etiquetas corretas, defina
+    // OPEN_FROM_PHASE igual ao do bolão (ex.: "Quartas de Final" no Brasil).
+    const tag = matchCountsForPool({ teamA: j.a, teamB: j.b, phase: j.fase })
+      ? "VALE PALPITE"
+      : "só Agenda";
     console.log(`+ ${teamName(j.a)} x ${teamName(j.b)} (${tag})`);
     criados++;
   }
