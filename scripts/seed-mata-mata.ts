@@ -53,6 +53,10 @@ const JOGOS: Jogo[] = [
   // Semifinal — 2 confrontos (horários em UTC).
   { a: "FR", b: "ES", utc: "2026-07-14T19:00:00Z", fase: "Semifinal" },
   { a: "ENG", b: "AR", utc: "2026-07-15T19:00:00Z", fase: "Semifinal" },
+
+  // Decisões — chave completa (horários em UTC).
+  { a: "FR", b: "ENG", utc: "2026-07-18T21:00:00Z", fase: "Disputa de 3º Lugar" },
+  { a: "ES", b: "AR", utc: "2026-07-19T19:00:00Z", fase: "Final" },
 ];
 
 async function main() {
