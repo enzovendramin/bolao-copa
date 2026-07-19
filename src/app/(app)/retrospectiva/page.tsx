@@ -3,22 +3,10 @@ import { db } from "@/lib/db";
 import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition, POOL_MATCH_FILTER } from "@/lib/queries";
 import { computeAwards, computeCuriosidades, computeSummary, RetroUser } from "@/lib/retro";
-import { RetroAwards } from "@/components/retro-awards";
+import { RetroCards, DisplayCard } from "@/components/retro-awards";
 import { scorePrediction } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
-
-function InfoCard({ emoji, title, value }: { emoji: string; title: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-      <span className="shrink-0 text-3xl">{emoji}</span>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
-        <p className="text-base font-bold leading-snug text-slate-800">{value}</p>
-      </div>
-    </div>
-  );
-}
 
 export default async function RetrospectivaPage() {
   await requireApprovedUser();
@@ -78,6 +66,15 @@ export default async function RetrospectivaPage() {
   const awards = computeAwards(users, edition.championTeam);
   const curiosidades = computeCuriosidades(users, finished, edition.championTeam);
 
+  // Prêmios e curiosidades juntos, no mesmo estilo de caixa colorida.
+  const cards: DisplayCard[] = [
+    ...awards.map((a) => ({ emoji: a.emoji, title: a.title, headline: a.winner, sub: a.detail })),
+    ...(resumo.placarMaisComum
+      ? [{ emoji: "🎯", title: "Placar mais palpitado", headline: resumo.placarMaisComum }]
+      : []),
+    ...curiosidades.map((c) => ({ emoji: c.emoji, title: c.title, headline: c.value })),
+  ];
+
   return (
     <div className="-mt-4 flex flex-col gap-6">
       {/* Cabeçalho festivo */}
@@ -111,26 +108,15 @@ export default async function RetrospectivaPage() {
         ))}
       </section>
 
-      {/* Curiosidades */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">🔎 Curiosidades da Copa</h2>
-        {resumo.placarMaisComum && (
-          <InfoCard emoji="🎯" title="Placar mais palpitado" value={resumo.placarMaisComum} />
-        )}
-        {curiosidades.map((c) => (
-          <InfoCard key={c.title} emoji={c.emoji} title={c.title} value={c.value} />
-        ))}
-      </section>
-
-      {/* Prêmios — 3 por página, com rolagem que encaixa */}
+      {/* Prêmios + curiosidades — 3 por página, com rolagem que encaixa */}
       <section className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold">🏅 Os prêmios do bolão</h2>
-        {awards.length === 0 ? (
+        <h2 className="text-lg font-bold">🏅 Prêmios e curiosidades do bolão</h2>
+        {cards.length === 0 ? (
           <p className="mt-3 rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
-            Os prêmios aparecerão conforme os resultados forem saindo.
+            Os destaques aparecerão conforme os resultados forem saindo.
           </p>
         ) : (
-          <RetroAwards awards={awards} />
+          <RetroCards cards={cards} />
         )}
       </section>
 

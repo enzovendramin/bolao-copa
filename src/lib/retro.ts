@@ -382,7 +382,7 @@ export function computeCuriosidades(
     cur.push({
       emoji: "🧨",
       title: "O resultado que mais surpreendeu",
-      value: `${teamName(surpresa.g.teamA)} ${surpresa.g.realA}×${surpresa.g.realB} ${teamName(surpresa.g.teamB)} — só ${surpresa.acertos} de ${surpresa.total} cravaram`,
+      value: `${teamName(surpresa.g.teamA)} ${surpresa.g.realA}×${surpresa.g.realB} ${teamName(surpresa.g.teamB)} — ${surpresa.acertos} de ${surpresa.total} cravaram`,
     });
   }
   if (consenso && consenso.acertos > 0) {

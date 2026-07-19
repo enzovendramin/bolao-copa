@@ -68,7 +68,7 @@ assert(cur.find((c) => c.title === "O time mais acreditado")?.value.includes("Es
 assert(cur.find((c) => c.title === "O palpite mais fora da realidade")?.value.includes("Pedro"), "palpite mais fora = Pedro (errou por 5)");
 const cur2 = computeCuriosidades([zA, zB, zC], [], null);
 assert(cur2.find((c) => c.title === "O palpite unânime")?.value.includes("2 de 3"), "unânime = 2 de 3");
-assert(cur2.find((c) => c.title === "O resultado que mais surpreendeu")?.value.includes("só 1 de 3"), "surpreendeu = 1 de 3");
+assert(cur2.find((c) => c.title === "O resultado que mais surpreendeu")?.value.includes("1 de 3"), "surpreendeu = 1 de 3");
 
 const resumo = computeSummary(users);
 assert(resumo.participantes === 3, "resumo: 3 participantes");
