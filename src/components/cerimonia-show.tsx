@@ -1,68 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Confetti } from "./confetti";
+import { Reveal } from "./reveal";
 
 type Row = { name: string; points: number };
-
-// Revela o conteúdo quando ele entra na tela (efeito "aparece ao rolar").
-function Reveal({
-  children,
-  onShow,
-  className = "",
-}: {
-  children: React.ReactNode;
-  onShow?: () => void;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setShown(true);
-          onShow?.();
-          io.disconnect();
-        }
-      },
-      { threshold: 0.4 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [onShow]);
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${
-        shown ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-      } ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
 
 function Colocacao({
   rotulo,
   medal,
   row,
   tamNome,
-  onShow,
 }: {
   rotulo: string;
   medal: string;
   row: Row;
   tamNome: string;
-  onShow?: () => void;
 }) {
   return (
-    <Reveal onShow={onShow} className="flex min-h-[62vh] flex-col items-center justify-center gap-2 text-center">
+    <Reveal className="flex min-h-[62vh] flex-col items-center justify-center gap-2 text-center">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{rotulo}</p>
       <div className="text-6xl">{medal}</div>
       <p className={`font-black leading-tight text-slate-900 ${tamNome}`}>{row.name}</p>
@@ -74,6 +31,12 @@ function Colocacao({
 export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boolean }) {
   const [confete, setConfete] = useState(false);
   const [primeiro, segundo, terceiro] = rows;
+
+  const degraus = [
+    { row: segundo, medal: "🥈", h: "h-28", bg: "from-slate-300 to-slate-400", place: "2º" },
+    { row: primeiro, medal: "🥇", h: "h-44", bg: "from-amber-300 to-amber-500", place: "1º" },
+    { row: terceiro, medal: "🥉", h: "h-20", bg: "from-orange-300 to-orange-400", place: "3º" },
+  ];
 
   return (
     <div className="-mt-4 flex flex-col">
@@ -91,18 +54,14 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
         </p>
       </section>
 
-      {terceiro && (
-        <Colocacao rotulo="3º lugar" medal="🥉" row={terceiro} tamNome="text-2xl" />
-      )}
-      {segundo && (
-        <Colocacao rotulo="2º lugar" medal="🥈" row={segundo} tamNome="text-3xl" />
-      )}
+      {terceiro && <Colocacao rotulo="3º lugar" medal="🥉" row={terceiro} tamNome="text-2xl" />}
+      {segundo && <Colocacao rotulo="2º lugar" medal="🥈" row={segundo} tamNome="text-3xl" />}
 
       {/* Campeão — dispara o confete */}
       {primeiro && (
         <Reveal
           onShow={() => setConfete(true)}
-          className="flex min-h-[78vh] flex-col items-center justify-center gap-2 text-center"
+          className="flex min-h-[70vh] flex-col items-center justify-center gap-2 text-center"
         >
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">
             {encerrado ? "🎉 Grande campeão" : "👑 Líder atual"}
@@ -112,6 +71,29 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
           <p className="text-2xl font-black text-emerald-700">{primeiro.points} pontos</p>
         </Reveal>
       )}
+
+      {/* Pódio final */}
+      <Reveal className="flex min-h-[72vh] flex-col items-center justify-center gap-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">O pódio</p>
+        <div className="flex w-full items-end justify-center gap-2 px-2">
+          {degraus.map((s, i) =>
+            s.row ? (
+              <div key={i} className="flex w-1/3 max-w-[120px] flex-col items-center gap-1">
+                <span className="text-4xl">{s.medal}</span>
+                <span className="w-full truncate text-center text-sm font-bold">{s.row.name}</span>
+                <div
+                  className={`flex w-full flex-col items-center justify-start rounded-t-xl bg-gradient-to-b ${s.h} ${s.bg} pt-2 shadow-inner`}
+                >
+                  <span className="text-2xl font-black text-white drop-shadow">{s.place}</span>
+                  <span className="mt-0.5 text-sm font-bold text-white/90">{s.row.points} pts</span>
+                </div>
+              </div>
+            ) : (
+              <div key={i} className="w-1/3 max-w-[120px]" />
+            )
+          )}
+        </div>
+      </Reveal>
 
       {/* Fecho */}
       <Reveal className="flex flex-col items-center gap-4 py-10 text-center">

@@ -3,21 +3,10 @@ import { db } from "@/lib/db";
 import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition, POOL_MATCH_FILTER } from "@/lib/queries";
 import { computeAwards, computeSummary, RetroUser } from "@/lib/retro";
+import { RetroAwards } from "@/components/retro-awards";
 import { scorePrediction } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
-
-// Paleta de gradientes para os cards de prêmio (rotaciona).
-const GRADS = [
-  "from-emerald-500 to-teal-600",
-  "from-amber-400 to-orange-500",
-  "from-rose-500 to-pink-600",
-  "from-sky-500 to-indigo-600",
-  "from-violet-500 to-purple-600",
-  "from-lime-500 to-green-600",
-  "from-fuchsia-500 to-rose-600",
-  "from-cyan-500 to-blue-600",
-];
 
 export default async function RetrospectivaPage() {
   await requireApprovedUser();
@@ -111,33 +100,16 @@ export default async function RetrospectivaPage() {
         </p>
       )}
 
-      {/* Prêmios */}
-      <section className="flex flex-col gap-3">
+      {/* Prêmios — aparecem um de cada vez ao rolar */}
+      <section className="flex flex-col gap-1">
         <h2 className="text-lg font-bold">🏅 Os prêmios do bolão</h2>
+        <p className="text-sm text-slate-500">Role para revelar cada um 👇</p>
         {awards.length === 0 ? (
-          <p className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
+          <p className="mt-3 rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
             Os prêmios aparecerão conforme os resultados forem saindo.
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {awards.map((a, i) => (
-              <div
-                key={a.title}
-                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${GRADS[i % GRADS.length]} p-4 text-white shadow-sm`}
-              >
-                <span className="absolute -right-3 -top-3 text-6xl opacity-25">{a.emoji}</span>
-                <div className="relative">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
-                    {a.title}
-                  </p>
-                  <p className="mt-1 text-xl font-black leading-tight">
-                    {a.emoji} {a.winner}
-                  </p>
-                  <p className="mt-1 text-sm text-white/90">{a.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <RetroAwards awards={awards} />
         )}
       </section>
 
