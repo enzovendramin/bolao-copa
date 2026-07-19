@@ -65,6 +65,7 @@ function extremos(
 }
 
 const exactCount = (u: RetroUser) => u.predictions.filter((p) => p.isExact).length;
+const outcomeCount = (u: RetroUser) => u.predictions.filter((p) => p.isOutcome).length;
 const zeroCount = (u: RetroUser) => u.predictions.filter((p) => p.points === 0).length;
 const avgGols = (u: RetroUser) =>
   u.predictions.reduce((s, p) => s + p.scoreA + p.scoreB, 0) / u.predictions.length;
@@ -91,14 +92,29 @@ export function computeSummary(users: RetroUser[]): RetroSummary {
 export function computeAwards(users: RetroUser[], championTeam: string | null): Award[] {
   const awards: Award[] = [];
 
-  // 🏆 Campeão do bolão
-  const campeao = extremos(users, (u) => u.points, 1, false);
-  if (campeao) {
+  // 🏆 Campeão do bolão — com desempate: pontos → exatos → acertos.
+  // Só lista mais de um nome se houver empate em TODOS os critérios.
+  const ranked = [...users].sort(
+    (a, b) =>
+      b.points - a.points ||
+      exactCount(b) - exactCount(a) ||
+      outcomeCount(b) - outcomeCount(a)
+  );
+  const top = ranked[0];
+  if (top) {
+    const campeoes = ranked
+      .filter(
+        (u) =>
+          u.points === top.points &&
+          exactCount(u) === exactCount(top) &&
+          outcomeCount(u) === outcomeCount(top)
+      )
+      .map((u) => u.name);
     awards.push({
       emoji: "🏆",
       title: "Campeão do bolão",
-      winner: juntar(campeao.nomes),
-      detail: `${campeao.valor} pontos`,
+      winner: juntar(campeoes),
+      detail: `${top.points} pontos`,
     });
   }
 

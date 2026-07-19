@@ -27,13 +27,23 @@ async function recalc(editionId: string, savePrevious = true) {
     exactCount: part.user.predictions.filter((p) => p.isExact).length,
     outcomeCount: part.user.predictions.filter((p) => p.isOutcome).length,
   }));
-  totals.sort((a, b) => b.points - a.points);
-  let lastPoints: number | null = null;
+  totals.sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.exactCount - a.exactCount ||
+      b.outcomeCount - a.outcomeCount
+  );
+  let last: { points: number; exactCount: number; outcomeCount: number } | null = null;
   let lastPosition = 0;
   for (let i = 0; i < totals.length; i++) {
     const t = totals[i];
-    const position = t.points === lastPoints ? lastPosition : i + 1;
-    lastPoints = t.points;
+    const empatouTudo =
+      last !== null &&
+      t.points === last.points &&
+      t.exactCount === last.exactCount &&
+      t.outcomeCount === last.outcomeCount;
+    const position = empatouTudo ? lastPosition : i + 1;
+    last = { points: t.points, exactCount: t.exactCount, outcomeCount: t.outcomeCount };
     lastPosition = position;
     await db.participation.update({
       where: { id: t.part.id },

@@ -36,8 +36,9 @@ export default async function RankingPage() {
 
       <p className="text-xs text-slate-400">
         🎯 placar exato = {POINTS_EXACT} pts · ✔ acertou o resultado ={" "}
-        {POINTS_OUTCOME} pts · 🏆 chute do campeão certo = {POINTS_CHAMPION} pts ·
-        Empatados ocupam a mesma posição.
+        {POINTS_OUTCOME} pts · 🏆 chute do campeão certo = {POINTS_CHAMPION} pts.
+        Em caso de empate, desempata quem tem mais placares exatos (🎯) e, depois,
+        mais acertos de resultado (✔).
         {picksVisible && " A bandeira ao lado do nome é o chute do campeão."}
       </p>
     </div>
