@@ -53,6 +53,7 @@ export default async function RetrospectivaPage() {
     predictions: p.user.predictions.map((pr) => {
       const r = scorePrediction(pr.scoreA, pr.scoreB, pr.match.scoreA!, pr.match.scoreB!);
       return {
+        matchId: pr.matchId,
         teamA: pr.match.teamA,
         teamB: pr.match.teamB,
         phase: pr.match.phase,

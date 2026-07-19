@@ -6,14 +6,16 @@ function assert(cond: boolean, msg: string) {
   console.log("OK:", msg);
 }
 
+let matchSeq = 0;
 const P = (
   scoreA: number, scoreB: number, realA: number, realB: number,
-  extra?: Partial<{ teamA: string; teamB: string; phase: string }>
+  extra?: Partial<{ teamA: string; teamB: string; phase: string; matchId: string }>
 ) => {
   const isExact = scoreA === realA && scoreB === realB;
   const oc = (a: number, b: number) => Math.sign(a - b);
   const isOutcome = oc(scoreA, scoreB) === oc(realA, realB);
   return {
+    matchId: extra?.matchId ?? `m${matchSeq++}`,
     teamA: extra?.teamA ?? "BR", teamB: extra?.teamB ?? "AR", phase: extra?.phase ?? "Final",
     scoreA, scoreB, realA, realB,
     points: isExact ? 5 : isOutcome ? 2 : 0, isExact, isOutcome,
@@ -46,6 +48,19 @@ const empatados: RetroUser[] = [
 ];
 assert(computeAwards(empatados, null).find((a) => a.title === "Campeão do bolão")?.winner === "Ana e Bia",
   "empate no 1º lugar lista os dois");
+
+// --- Novos prêmios ---
+const g1: RetroUser = { name: "Gêmeo1", championPick: null, points: 0, predictions: [P(2, 1, 3, 0, { matchId: "j1" }), P(1, 1, 1, 1, { matchId: "j2" })] };
+const g2: RetroUser = { name: "Gêmeo2", championPick: null, points: 0, predictions: [P(2, 1, 3, 0, { matchId: "j1" }), P(0, 0, 1, 1, { matchId: "j2" })] };
+const gAwards = computeAwards([g1, g2], null);
+assert(gAwards.find((a) => a.title === "Almas gêmeas")?.winner === "Gêmeo1 & Gêmeo2", "almas gêmeas = a dupla (1 palpite idêntico)");
+assert(gAwards.find((a) => a.title === "O Eterno Quase")?.winner === "Gêmeo2", "eterno quase = Gêmeo2 (2 quases)");
+
+// Zebra: em z1 (3 palpiteiros) só Za acerta o resultado
+const zA: RetroUser = { name: "Za", championPick: null, points: 0, predictions: [P(1, 0, 1, 0, { matchId: "z1" })] };
+const zB: RetroUser = { name: "Zb", championPick: null, points: 0, predictions: [P(0, 1, 1, 0, { matchId: "z1" })] };
+const zC: RetroUser = { name: "Zc", championPick: null, points: 0, predictions: [P(0, 2, 1, 0, { matchId: "z1" })] };
+assert(computeAwards([zA, zB, zC], null).find((a) => a.title === "A Zebra")?.winner === "Za", "zebra = Za (1 de 3 cravou)");
 
 const resumo = computeSummary(users);
 assert(resumo.participantes === 3, "resumo: 3 participantes");

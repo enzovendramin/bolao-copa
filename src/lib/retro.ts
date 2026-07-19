@@ -4,6 +4,7 @@
 import { teamName } from "./teams";
 
 export type RetroPrediction = {
+  matchId: string;
   teamA: string;
   teamB: string;
   phase: string;
@@ -182,6 +183,89 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
       title: "O Mais dedicado",
       winner: juntar(dedicado.nomes),
       detail: `palpitou em ${dedicado.valor} jogos`,
+    });
+  }
+
+  // 📏 O Eterno Quase — acertou o vencedor, mas errou o placar
+  const quase = extremos(
+    users,
+    (u) => u.predictions.filter((p) => p.isOutcome && !p.isExact).length,
+    1
+  );
+  if (quase && quase.valor > 0) {
+    awards.push({
+      emoji: "📏",
+      title: "O Eterno Quase",
+      winner: juntar(quase.nomes),
+      detail: `${quase.valor} vezes acertou quem venceu, mas não o placar`,
+    });
+  }
+
+  // 🧊 O Rei do Empate — mais empates previstos com sucesso
+  const empate = extremos(
+    users,
+    (u) => u.predictions.filter((p) => p.scoreA === p.scoreB && p.realA === p.realB).length,
+    1
+  );
+  if (empate && empate.valor > 0) {
+    awards.push({
+      emoji: "🧊",
+      title: "O Rei do Empate",
+      winner: juntar(empate.nomes),
+      detail: `${empate.valor} ${empate.valor === 1 ? "empate previsto" : "empates previstos"} com sucesso`,
+    });
+  }
+
+  // 🤝 Almas gêmeas — a dupla com mais palpites idênticos
+  let dupla: { a: string; b: string; n: number } | null = null;
+  for (let i = 0; i < users.length; i++) {
+    for (let j = i + 1; j < users.length; j++) {
+      const porJogoB = new Map(users[j].predictions.map((p) => [p.matchId, p]));
+      let n = 0;
+      for (const pa of users[i].predictions) {
+        const pb = porJogoB.get(pa.matchId);
+        if (pb && pb.scoreA === pa.scoreA && pb.scoreB === pa.scoreB) n++;
+      }
+      if (n > 0 && (!dupla || n > dupla.n)) dupla = { a: users[i].name, b: users[j].name, n };
+    }
+  }
+  if (dupla) {
+    awards.push({
+      emoji: "🤝",
+      title: "Almas gêmeas",
+      winner: `${dupla.a} & ${dupla.b}`,
+      detail: `${dupla.n} palpites idênticos — combinaram?`,
+    });
+  }
+
+  // 🧨 A Zebra — o acerto de resultado mais na contramão do grupo
+  const porJogo = new Map<string, RetroPrediction[]>();
+  for (const u of users)
+    for (const p of u.predictions) {
+      const arr = porJogo.get(p.matchId) ?? [];
+      arr.push(p);
+      porJogo.set(p.matchId, arr);
+    }
+  let zebra: { nome: string; p: RetroPrediction; acertos: number; total: number } | null = null;
+  for (const u of users) {
+    for (const p of u.predictions) {
+      if (!p.isOutcome) continue;
+      const todos = porJogo.get(p.matchId)!;
+      if (todos.length < 3) continue; // precisa de gente suficiente para ser "zebra"
+      const acertos = todos.filter((x) => x.isOutcome).length;
+      const ratio = acertos / todos.length;
+      const rZebra = zebra ? zebra.acertos / zebra.total : Infinity;
+      if (ratio < rZebra || (ratio === rZebra && todos.length > (zebra?.total ?? 0))) {
+        zebra = { nome: u.name, p, acertos, total: todos.length };
+      }
+    }
+  }
+  if (zebra) {
+    awards.push({
+      emoji: "🧨",
+      title: "A Zebra",
+      winner: zebra.nome,
+      detail: `só ${zebra.acertos} de ${zebra.total} cravaram o resultado de ${teamName(zebra.p.teamA)} × ${teamName(zebra.p.teamB)}`,
     });
   }
 
