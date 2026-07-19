@@ -126,6 +126,12 @@ export default async function RetrospectivaPage() {
       >
         🎉 Ver a cerimônia de premiação →
       </Link>
+      <Link
+        href="/feedback"
+        className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700"
+      >
+        💬 Deixe seu feedback do bolão
+      </Link>
     </div>
   );
 }

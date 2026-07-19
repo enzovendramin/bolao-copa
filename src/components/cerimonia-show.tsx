@@ -105,6 +105,12 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
         )}
         <div className="flex w-full flex-col gap-2">
           <Link
+            href="/feedback"
+            className="rounded-2xl bg-emerald-700 px-4 py-3.5 font-bold text-white shadow-sm"
+          >
+            💬 Deixe seu feedback
+          </Link>
+          <Link
             href="/ranking"
             className="rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-emerald-700"
           >

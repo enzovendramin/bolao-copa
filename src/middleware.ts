@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 // O middleware só verifica se há sessão válida (rápido, roda no edge).
 // Verificações de papel (admin) e status (aprovado) são feitas nos layouts,
 // pois exigem consulta ao banco.
-const PROTECTED = ["/inicio", "/palpites", "/ranking", "/historico", "/agenda", "/retrospectiva", "/cerimonia", "/senha", "/admin", "/aguardando"];
+const PROTECTED = ["/inicio", "/palpites", "/ranking", "/historico", "/agenda", "/retrospectiva", "/cerimonia", "/feedback", "/senha", "/admin", "/aguardando"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -28,5 +28,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/inicio/:path*", "/palpites/:path*", "/ranking/:path*", "/historico/:path*", "/agenda/:path*", "/retrospectiva", "/cerimonia", "/senha", "/admin/:path*", "/aguardando"],
+  matcher: ["/inicio/:path*", "/palpites/:path*", "/ranking/:path*", "/historico/:path*", "/agenda/:path*", "/retrospectiva", "/cerimonia", "/feedback", "/senha", "/admin/:path*", "/aguardando"],
 };
