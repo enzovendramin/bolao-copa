@@ -1,6 +1,7 @@
 // Estatísticas de encerramento ("Retrospectiva da Copa").
 // Funções puras: recebem os dados já carregados e devolvem os prêmios.
 // Assim dá para testar sem banco (ver scripts/test-retro.ts).
+import { teamName } from "./teams";
 
 export type RetroPrediction = {
   teamA: string;
@@ -156,7 +157,7 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
       emoji: "🎯",
       title: "A cravada da Copa",
       winner: cravada.nome,
-      detail: `previu ${cravada.p.teamA} ${cravada.p.realA}×${cravada.p.realB} ${cravada.p.teamB} — na mosca!`,
+      detail: `previu ${teamName(cravada.p.teamA)} ${cravada.p.realA}×${cravada.p.realB} ${teamName(cravada.p.teamB)} — na mosca!`,
     });
   }
 
