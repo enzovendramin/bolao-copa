@@ -1,7 +1,7 @@
 // Estatísticas de encerramento ("Retrospectiva da Copa").
 // Funções puras: recebem os dados já carregados e devolvem os prêmios.
 // Assim dá para testar sem banco (ver scripts/test-retro.ts).
-import { teamName } from "./teams";
+import { teamName, PHASES } from "./teams";
 
 export type RetroPrediction = {
   matchId: string;
@@ -270,4 +270,143 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
   }
 
   return awards;
+}
+
+// ---------- Curiosidades (fatos do grupo/da Copa) ----------
+
+export type Curiosidade = { emoji: string; title: string; value: string };
+
+export function computeCuriosidades(
+  users: RetroUser[],
+  finishedMatches: { teamA: string; teamB: string; phase: string }[],
+  championTeam: string | null
+): Curiosidade[] {
+  const cur: Curiosidade[] = [];
+
+  // Contagem de chutes do campeão
+  const picks = new Map<string, number>();
+  for (const u of users) if (u.championPick) picks.set(u.championPick, (picks.get(u.championPick) ?? 0) + 1);
+
+  // 🏆 O time mais acreditado
+  let topPick: { code: string; n: number } | null = null;
+  for (const [code, n] of picks) if (!topPick || n > topPick.n) topPick = { code, n };
+  if (topPick) {
+    cur.push({
+      emoji: "🏆",
+      title: "O time mais acreditado",
+      value: `${teamName(topPick.code)} — ${topPick.n} ${topPick.n === 1 ? "aposta" : "apostas"} no título`,
+    });
+  }
+
+  // 💔 A maior decepção (só faz sentido depois de definida a campeã)
+  if (championTeam) {
+    const idxFase = (ph: string) => PHASES.indexOf(ph as (typeof PHASES)[number]);
+    const furthest = new Map<string, number>();
+    for (const m of finishedMatches) {
+      for (const t of [m.teamA, m.teamB]) {
+        const i = idxFase(m.phase);
+        if (i > (furthest.get(t) ?? -1)) furthest.set(t, i);
+      }
+    }
+    let dec: { code: string; n: number } | null = null;
+    for (const [code, n] of picks) {
+      if (code === championTeam) continue;
+      if (!dec || n > dec.n) dec = { code, n };
+    }
+    if (dec) {
+      const fi = furthest.get(dec.code);
+      let onde: string;
+      if (fi === undefined) onde = "decepcionou";
+      else if (fi >= PHASES.indexOf("Final")) onde = "foi vice-campeã, mas não levou a taça";
+      else if (fi === PHASES.indexOf("Disputa de 3º Lugar")) onde = "parou na semifinal";
+      else onde = `parou nas ${PHASES[fi]}`;
+      cur.push({
+        emoji: "💔",
+        title: "A maior decepção",
+        value: `${teamName(dec.code)} — ${dec.n} cravaram o título, mas ${onde}`,
+      });
+    }
+  }
+
+  // Agrupa os palpites por jogo (para os fatos de "grupo x resultado")
+  type Grp = {
+    teamA: string; teamB: string; realA: number; realB: number;
+    preds: { oc: number; isOutcome: boolean }[];
+  };
+  const grupos = new Map<string, Grp>();
+  for (const u of users)
+    for (const p of u.predictions) {
+      let g = grupos.get(p.matchId);
+      if (!g) { g = { teamA: p.teamA, teamB: p.teamB, realA: p.realA, realB: p.realB, preds: [] }; grupos.set(p.matchId, g); }
+      g.preds.push({ oc: Math.sign(p.scoreA - p.scoreB), isOutcome: p.isOutcome });
+    }
+  const desfecho = (oc: number, g: Grp) =>
+    oc > 0 ? `vitória de ${teamName(g.teamA)}` : oc < 0 ? `vitória de ${teamName(g.teamB)}` : "empate";
+
+  // 🐑 O palpite unânime (maior concordância no vencedor)
+  let unanime: { g: Grp; oc: number; n: number; total: number } | null = null;
+  for (const g of grupos.values()) {
+    const total = g.preds.length;
+    if (total < 3) continue;
+    const cont = new Map<number, number>();
+    for (const p of g.preds) cont.set(p.oc, (cont.get(p.oc) ?? 0) + 1);
+    let bestOc = 0, bestN = -1;
+    for (const [oc, n] of cont) if (n > bestN) { bestN = n; bestOc = oc; }
+    const rUn = unanime ? unanime.n / unanime.total : -1;
+    if (bestN / total > rUn || (bestN / total === rUn && total > (unanime?.total ?? 0)))
+      unanime = { g, oc: bestOc, n: bestN, total };
+  }
+  if (unanime) {
+    cur.push({
+      emoji: "🐑",
+      title: "O palpite unânime",
+      value: `${unanime.n} de ${unanime.total} apostaram em ${desfecho(unanime.oc, unanime.g)} — ${teamName(unanime.g.teamA)} × ${teamName(unanime.g.teamB)}`,
+    });
+  }
+
+  // 🧨 O resultado que mais surpreendeu (menos acertos)
+  let surpresa: { g: Grp; acertos: number; total: number } | null = null;
+  // 🤝 O jogo do consenso (mais acertos)
+  let consenso: { g: Grp; acertos: number; total: number } | null = null;
+  for (const g of grupos.values()) {
+    const total = g.preds.length;
+    if (total < 3) continue;
+    const acertos = g.preds.filter((p) => p.isOutcome).length;
+    const ratio = acertos / total;
+    const rS = surpresa ? surpresa.acertos / surpresa.total : Infinity;
+    if (ratio < rS || (ratio === rS && total > (surpresa?.total ?? 0))) surpresa = { g, acertos, total };
+    const rC = consenso ? consenso.acertos / consenso.total : -1;
+    if (ratio > rC || (ratio === rC && total > (consenso?.total ?? 0))) consenso = { g, acertos, total };
+  }
+  if (surpresa) {
+    cur.push({
+      emoji: "🧨",
+      title: "O resultado que mais surpreendeu",
+      value: `${teamName(surpresa.g.teamA)} ${surpresa.g.realA}×${surpresa.g.realB} ${teamName(surpresa.g.teamB)} — só ${surpresa.acertos} de ${surpresa.total} cravaram`,
+    });
+  }
+  if (consenso && consenso.acertos > 0) {
+    cur.push({
+      emoji: "🤝",
+      title: "O jogo do consenso",
+      value: `${teamName(consenso.g.teamA)} × ${teamName(consenso.g.teamB)} — ${consenso.acertos} de ${consenso.total} acertaram o resultado`,
+    });
+  }
+
+  // 🌪️ O palpite mais fora da realidade
+  let fora: { nome: string; p: RetroPrediction; err: number } | null = null;
+  for (const u of users)
+    for (const p of u.predictions) {
+      const err = Math.abs(p.scoreA - p.realA) + Math.abs(p.scoreB - p.realB);
+      if (!fora || err > fora.err) fora = { nome: u.name, p, err };
+    }
+  if (fora && fora.err > 0) {
+    cur.push({
+      emoji: "🌪️",
+      title: "O palpite mais fora da realidade",
+      value: `${fora.nome} cravou ${teamName(fora.p.teamA)} ${fora.p.scoreA}×${fora.p.scoreB} ${teamName(fora.p.teamB)} — e deu ${fora.p.realA}×${fora.p.realB}`,
+    });
+  }
+
+  return cur;
 }

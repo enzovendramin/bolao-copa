@@ -2,11 +2,23 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition, POOL_MATCH_FILTER } from "@/lib/queries";
-import { computeAwards, computeSummary, RetroUser } from "@/lib/retro";
+import { computeAwards, computeCuriosidades, computeSummary, RetroUser } from "@/lib/retro";
 import { RetroAwards } from "@/components/retro-awards";
 import { scorePrediction } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
+
+function InfoCard({ emoji, title, value }: { emoji: string; title: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <span className="shrink-0 text-3xl">{emoji}</span>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
+        <p className="text-base font-bold leading-snug text-slate-800">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export default async function RetrospectivaPage() {
   await requireApprovedUser();
@@ -57,8 +69,14 @@ export default async function RetrospectivaPage() {
     }),
   }));
 
+  const finished = await db.match.findMany({
+    where: { editionId: edition.id, scoreA: { not: null }, scoreB: { not: null } },
+    select: { teamA: true, teamB: true, phase: true },
+  });
+
   const resumo = computeSummary(users);
   const awards = computeAwards(users, edition.championTeam);
+  const curiosidades = computeCuriosidades(users, finished, edition.championTeam);
 
   return (
     <div className="-mt-4 flex flex-col gap-6">
@@ -97,16 +115,11 @@ export default async function RetrospectivaPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">🔎 Curiosidades da Copa</h2>
         {resumo.placarMaisComum && (
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-            <span className="text-3xl">🎯</span>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Placar mais palpitado
-              </p>
-              <p className="text-lg font-black text-slate-800">{resumo.placarMaisComum}</p>
-            </div>
-          </div>
+          <InfoCard emoji="🎯" title="Placar mais palpitado" value={resumo.placarMaisComum} />
         )}
+        {curiosidades.map((c) => (
+          <InfoCard key={c.title} emoji={c.emoji} title={c.title} value={c.value} />
+        ))}
       </section>
 
       {/* Prêmios — 3 por página, com rolagem que encaixa */}

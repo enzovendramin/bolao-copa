@@ -1,7 +1,7 @@
 // Testes da retrospectiva com dados fictícios (não usa banco).
-import { computeAwards, computeSummary, RetroUser } from "../src/lib/retro";
+import { computeAwards, computeCuriosidades, computeSummary, RetroUser } from "../src/lib/retro";
 
-function assert(cond: boolean, msg: string) {
+function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error("FALHOU: " + msg);
   console.log("OK:", msg);
 }
@@ -61,6 +61,14 @@ const zA: RetroUser = { name: "Za", championPick: null, points: 0, predictions: 
 const zB: RetroUser = { name: "Zb", championPick: null, points: 0, predictions: [P(0, 1, 1, 0, { matchId: "z1" })] };
 const zC: RetroUser = { name: "Zc", championPick: null, points: 0, predictions: [P(0, 2, 1, 0, { matchId: "z1" })] };
 assert(computeAwards([zA, zB, zC], null).find((a) => a.title === "A Zebra")?.winner === "Za", "zebra = Za (1 de 3 cravou)");
+
+// --- Curiosidades ---
+const cur = computeCuriosidades(users, [], "ES");
+assert(cur.find((c) => c.title === "O time mais acreditado")?.value.includes("Espanha"), "time mais acreditado = Espanha");
+assert(cur.find((c) => c.title === "O palpite mais fora da realidade")?.value.includes("Pedro"), "palpite mais fora = Pedro (errou por 5)");
+const cur2 = computeCuriosidades([zA, zB, zC], [], null);
+assert(cur2.find((c) => c.title === "O palpite unânime")?.value.includes("2 de 3"), "unânime = 2 de 3");
+assert(cur2.find((c) => c.title === "O resultado que mais surpreendeu")?.value.includes("só 1 de 3"), "surpreendeu = 1 de 3");
 
 const resumo = computeSummary(users);
 assert(resumo.participantes === 3, "resumo: 3 participantes");
