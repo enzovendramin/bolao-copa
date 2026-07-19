@@ -28,7 +28,7 @@ function Colocacao({
   );
 }
 
-export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boolean }) {
+export function CerimoniaShow({ rows }: { rows: Row[] }) {
   const [confete, setConfete] = useState(false);
   const [primeiro, segundo, terceiro] = rows;
 
@@ -45,9 +45,7 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
       {/* Abertura */}
       <section className="flex min-h-[56vh] flex-col items-center justify-center gap-3 text-center">
         <div className="text-6xl">🏆</div>
-        <h1 className="text-3xl font-black leading-tight">
-          {encerrado ? "Cerimônia de premiação" : "Pódio parcial"}
-        </h1>
+        <h1 className="text-3xl font-black leading-tight">Cerimônia de premiação</h1>
         <p className="text-sm text-slate-500">Club Brésil · Copa 2026</p>
         <p className="mt-8 animate-bounce text-sm font-medium text-slate-400">
           role para baixo 👇
@@ -64,7 +62,7 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
           className="flex min-h-[48vh] flex-col items-center justify-center gap-2 text-center"
         >
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">
-            {encerrado ? "🎉 Grande campeão" : "👑 Líder atual"}
+            🎉 Grande campeão
           </p>
           <div className="text-7xl">🥇</div>
           <p className="text-4xl font-black leading-tight text-slate-900">{primeiro.name}</p>
@@ -97,12 +95,6 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
 
       {/* Fecho */}
       <Reveal className="flex flex-col items-center gap-4 pb-8 pt-2 text-center">
-        {!encerrado && (
-          <p className="mx-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            ⏳ A Copa ainda não acabou — este é o pódio parcial. A cerimônia
-            oficial será quando a final for lançada!
-          </p>
-        )}
         <div className="flex w-full flex-col gap-2">
           <Link
             href="/feedback"

@@ -1,6 +1,5 @@
-import { db } from "@/lib/db";
 import { requireApprovedUser } from "@/lib/auth";
-import { getActiveEdition, getRankingRows, POOL_MATCH_FILTER } from "@/lib/queries";
+import { getActiveEdition, getRankingRows } from "@/lib/queries";
 import { CerimoniaShow } from "@/components/cerimonia-show";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +10,6 @@ export default async function CerimoniaPage() {
   if (!edition) return <p className="text-center text-slate-500">Nenhuma edição ativa.</p>;
 
   const rows = await getRankingRows(edition.id);
-  const pendentes = await db.match.count({
-    where: { editionId: edition.id, scoreA: null, ...POOL_MATCH_FILTER },
-  });
-  const encerrado = pendentes === 0;
 
   if (rows.length === 0) {
     return (
@@ -24,10 +19,5 @@ export default async function CerimoniaPage() {
     );
   }
 
-  return (
-    <CerimoniaShow
-      rows={rows.slice(0, 3).map((r) => ({ name: r.name, points: r.points }))}
-      encerrado={encerrado}
-    />
-  );
+  return <CerimoniaShow rows={rows.slice(0, 3).map((r) => ({ name: r.name, points: r.points }))} />;
 }
