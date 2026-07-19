@@ -1,5 +1,6 @@
 import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition, getRankingRows } from "@/lib/queries";
+import { shortName } from "@/lib/retro";
 import { CerimoniaShow } from "@/components/cerimonia-show";
 
 export const dynamic = "force-dynamic";
@@ -19,5 +20,7 @@ export default async function CerimoniaPage() {
     );
   }
 
-  return <CerimoniaShow rows={rows.slice(0, 3).map((r) => ({ name: r.name, points: r.points }))} />;
+  return (
+    <CerimoniaShow rows={rows.slice(0, 3).map((r) => ({ name: shortName(r.name), points: r.points }))} />
+  );
 }

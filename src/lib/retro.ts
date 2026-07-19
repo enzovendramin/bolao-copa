@@ -38,7 +38,17 @@ export type RetroSummary = {
   placarMaisComum: string | null;
 };
 
-function juntar(nomes: string[]): string {
+// Nome curto para os cards festivos: primeiro nome + inicial do 1º sobrenome
+// (ex.: "Enzo Vendramin Silva" → "Enzo V."). Evita nomes longos poluírem o
+// layout. O nome completo continua no Ranking.
+export function shortName(full: string): string {
+  const parts = full.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return parts[0] ?? "";
+  return `${parts[0]} ${parts[1][0].toUpperCase()}.`;
+}
+
+function juntar(nomesRaw: string[]): string {
+  const nomes = nomesRaw.map(shortName);
   if (nomes.length === 0) return "—";
   if (nomes.length === 1) return nomes[0];
   if (nomes.length === 2) return `${nomes[0]} e ${nomes[1]}`;
@@ -177,7 +187,7 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
     awards.push({
       emoji: "🎯",
       title: "A cravada da Copa",
-      winner: cravada.nome,
+      winner: shortName(cravada.nome),
       detail: `previu ${teamName(cravada.p.teamA)} ${cravada.p.realA}×${cravada.p.realB} ${teamName(cravada.p.teamB)} — na mosca!`,
     });
   }
@@ -249,7 +259,7 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
     awards.push({
       emoji: "🤝",
       title: "Almas gêmeas",
-      winner: `${dupla.a} & ${dupla.b}`,
+      winner: `${shortName(dupla.a)} & ${shortName(dupla.b)}`,
       detail: `${dupla.n} palpites idênticos — combinaram?`,
     });
   }
@@ -280,7 +290,7 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
     awards.push({
       emoji: "🧨",
       title: "A Zebra",
-      winner: zebra.nome,
+      winner: shortName(zebra.nome),
       detail: `só ${zebra.acertos} de ${zebra.total} cravaram o resultado de ${teamName(zebra.p.teamA)} × ${teamName(zebra.p.teamB)}`,
     });
   }
@@ -420,7 +430,7 @@ export function computeCuriosidades(
     cur.push({
       emoji: "🌪️",
       title: "O palpite mais fora da realidade",
-      value: `${fora.nome} chutou ${teamName(fora.p.teamA)} ${fora.p.scoreA}×${fora.p.scoreB} ${teamName(fora.p.teamB)} — e deu ${fora.p.realA}×${fora.p.realB}`,
+      value: `${shortName(fora.nome)} chutou ${teamName(fora.p.teamA)} ${fora.p.scoreA}×${fora.p.scoreB} ${teamName(fora.p.teamB)} — e deu ${fora.p.realA}×${fora.p.realB}`,
     });
   }
 
