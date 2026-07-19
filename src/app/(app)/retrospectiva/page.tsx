@@ -100,10 +100,10 @@ export default async function RetrospectivaPage() {
         </p>
       )}
 
-      {/* Prêmios — aparecem um de cada vez ao rolar */}
+      {/* Prêmios — 3 por página, com rolagem que encaixa */}
       <section className="flex flex-col gap-1">
         <h2 className="text-lg font-bold">🏅 Os prêmios do bolão</h2>
-        <p className="text-sm text-slate-500">Role para revelar cada um 👇</p>
+        <p className="text-sm text-slate-500">Role dentro do quadro — 3 prêmios por vez 👇</p>
         {awards.length === 0 ? (
           <p className="mt-3 rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
             Os prêmios aparecerão conforme os resultados forem saindo.
