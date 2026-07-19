@@ -5,6 +5,7 @@ import { getActiveEdition, getRankingRows, POOL_MATCH_FILTER } from "@/lib/queri
 import { Podium } from "@/components/podium";
 import { RankingTable } from "@/components/ranking-table";
 import { Flag } from "@/components/flag";
+import { RetroBanner } from "@/components/retro-banner";
 import { teamName } from "@/lib/teams";
 import { formatDateTime } from "@/lib/dates";
 import { isOpenForPredictions } from "@/lib/match-status";
@@ -41,16 +42,7 @@ export default async function InicioPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link
-        href="/retrospectiva"
-        className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-4 text-white shadow-sm"
-      >
-        <div>
-          <p className="font-bold">✨ Retrospectiva da Copa 2026</p>
-          <p className="text-sm text-emerald-100">Prêmios, curiosidades e o pódio do bolão</p>
-        </div>
-        <span className="text-2xl">→</span>
-      </Link>
+      <RetroBanner />
 
       <p className="text-sm text-slate-600">
         Olá, <strong>{user.name.split(" ")[0]}</strong>! 👋
