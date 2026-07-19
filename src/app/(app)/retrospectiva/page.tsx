@@ -93,17 +93,25 @@ export default async function RetrospectivaPage() {
         ))}
       </section>
 
-      {resumo.placarMaisComum && (
-        <p className="-mt-2 text-center text-sm text-slate-500">
-          O placar mais palpitado da Copa foi{" "}
-          <strong className="text-slate-700">{resumo.placarMaisComum}</strong>.
-        </p>
-      )}
+      {/* Curiosidades */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-bold">🔎 Curiosidades da Copa</h2>
+        {resumo.placarMaisComum && (
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <span className="text-3xl">🎯</span>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Placar mais palpitado
+              </p>
+              <p className="text-lg font-black text-slate-800">{resumo.placarMaisComum}</p>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Prêmios — 3 por página, com rolagem que encaixa */}
       <section className="flex flex-col gap-1">
         <h2 className="text-lg font-bold">🏅 Os prêmios do bolão</h2>
-        <p className="text-sm text-slate-500">Role dentro do quadro — 3 prêmios por vez 👇</p>
         {awards.length === 0 ? (
           <p className="mt-3 rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
             Os prêmios aparecerão conforme os resultados forem saindo.
