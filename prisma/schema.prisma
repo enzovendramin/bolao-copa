@@ -8,6 +8,20 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// Feedback final do bolão (uma resposta por participante por edição).
+// Sem relações formais (só ids) para manter a migração simples e aditiva.
+model Feedback {
+  id         String   @id @default(cuid())
+  userId     String
+  editionId  String
+  gostou     String
+  melhoraria String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, editionId])
+}
+
 // role: ADMIN | PARTICIPANT
 // status: PENDING | APPROVED
 model User {

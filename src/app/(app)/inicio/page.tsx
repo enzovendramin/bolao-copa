@@ -5,6 +5,7 @@ import { getActiveEdition, getRankingRows, POOL_MATCH_FILTER } from "@/lib/queri
 import { Podium } from "@/components/podium";
 import { RankingTable } from "@/components/ranking-table";
 import { Flag } from "@/components/flag";
+import { RetroBanner } from "@/components/retro-banner";
 import { teamName } from "@/lib/teams";
 import { formatDateTime } from "@/lib/dates";
 import { isOpenForPredictions } from "@/lib/match-status";
@@ -41,6 +42,8 @@ export default async function InicioPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <RetroBanner />
+
       <p className="text-sm text-slate-600">
         Olá, <strong>{user.name.split(" ")[0]}</strong>! 👋
         {myRow?.position && (

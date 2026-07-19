@@ -63,7 +63,13 @@ export const getRankingRows = cache(async (editionId: string): Promise<RankingRo
   const parts = await db.participation.findMany({
     where: { editionId, user: { status: "APPROVED" } },
     include: { user: { select: { id: true, name: true } } },
-    orderBy: [{ points: "desc" }, { user: { name: "asc" } }],
+    // Mesma ordem do cálculo: pontos → exatos → acertos → nome.
+    orderBy: [
+      { points: "desc" },
+      { exactCount: "desc" },
+      { outcomeCount: "desc" },
+      { user: { name: "asc" } },
+    ],
   });
   return parts.map((p) => ({
     userId: p.user.id,

@@ -71,14 +71,27 @@ export async function recalcRanking(editionId: string, savePrevious = true) {
     };
   });
 
-  totals.sort((a, b) => b.points - a.points);
+  // Ordenação com desempate: pontos → placares exatos → acertos de resultado.
+  totals.sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.exactCount - a.exactCount ||
+      b.outcomeCount - a.outcomeCount
+  );
 
-  let lastPoints: number | null = null;
+  // Dois participantes só dividem a posição se empatarem em TUDO (pontos,
+  // exatos e acertos). Qualquer diferença nos critérios de desempate separa.
+  let last: { points: number; exactCount: number; outcomeCount: number } | null = null;
   let lastPosition = 0;
   for (let i = 0; i < totals.length; i++) {
     const t = totals[i];
-    const position = t.points === lastPoints ? lastPosition : i + 1;
-    lastPoints = t.points;
+    const empatouTudo =
+      last !== null &&
+      t.points === last.points &&
+      t.exactCount === last.exactCount &&
+      t.outcomeCount === last.outcomeCount;
+    const position = empatouTudo ? lastPosition : i + 1;
+    last = { points: t.points, exactCount: t.exactCount, outcomeCount: t.outcomeCount };
     lastPosition = position;
 
     await db.participation.update({

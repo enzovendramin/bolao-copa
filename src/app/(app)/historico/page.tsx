@@ -3,6 +3,7 @@ import { requireApprovedUser } from "@/lib/auth";
 import { getActiveEdition, POOL_MATCH_FILTER } from "@/lib/queries";
 import { Flag } from "@/components/flag";
 import { StatusBadge } from "@/components/status-badge";
+import { RetroBanner } from "@/components/retro-banner";
 import { teamName } from "@/lib/teams";
 import { formatDate, formatTime } from "@/lib/dates";
 import { matchStatus } from "@/lib/match-status";
@@ -29,6 +30,7 @@ export default async function HistoricoPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <RetroBanner />
       <div>
         <h1 className="text-xl font-bold">Histórico</h1>
         <p className="text-sm text-slate-500">

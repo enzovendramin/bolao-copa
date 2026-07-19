@@ -8,7 +8,7 @@
 // Jogos sem nenhuma das 6 seleções entram só na Agenda (não valem palpite);
 // isso é decidido automaticamente pelo app.
 import { PrismaClient } from "@prisma/client";
-import { teamName, isTracked } from "../src/lib/teams";
+import { teamName, matchCountsForPool } from "../src/lib/teams";
 
 const db = new PrismaClient();
 
@@ -44,10 +44,19 @@ const JOGOS: Jogo[] = [
   { a: "AR", b: "EG", utc: "2026-07-07T16:00:00Z", fase: "Oitavas de Final" },
   { a: "CH", b: "CO", utc: "2026-07-07T20:00:00Z", fase: "Oitavas de Final" },
 
-  // Quartas de Final — confrontos definidos em 06/07/2026 (horários em UTC).
-  // Faltam 2 (dependem de jogos das Oitavas de 06-07/07).
+  // Quartas de Final — 4 confrontos (horários em UTC).
   { a: "FR", b: "MA", utc: "2026-07-09T20:00:00Z", fase: "Quartas de Final" },
+  { a: "ES", b: "BE", utc: "2026-07-10T19:00:00Z", fase: "Quartas de Final" },
   { a: "NO", b: "ENG", utc: "2026-07-11T21:00:00Z", fase: "Quartas de Final" },
+  { a: "AR", b: "CH", utc: "2026-07-12T01:00:00Z", fase: "Quartas de Final" },
+
+  // Semifinal — 2 confrontos (horários em UTC).
+  { a: "FR", b: "ES", utc: "2026-07-14T19:00:00Z", fase: "Semifinal" },
+  { a: "ENG", b: "AR", utc: "2026-07-15T19:00:00Z", fase: "Semifinal" },
+
+  // Decisões — chave completa (horários em UTC).
+  { a: "FR", b: "ENG", utc: "2026-07-18T21:00:00Z", fase: "Disputa de 3º Lugar" },
+  { a: "ES", b: "AR", utc: "2026-07-19T19:00:00Z", fase: "Final" },
 ];
 
 async function main() {
@@ -89,7 +98,11 @@ async function main() {
         phase: j.fase,
       },
     });
-    const tag = isTracked(j.a) || isTracked(j.b) ? "VALE PALPITE" : "só Agenda";
+    // Reflete a regra real do bolão-alvo. Para etiquetas corretas, defina
+    // OPEN_FROM_PHASE igual ao do bolão (ex.: "Quartas de Final" no Brasil).
+    const tag = matchCountsForPool({ teamA: j.a, teamB: j.b, phase: j.fase })
+      ? "VALE PALPITE"
+      : "só Agenda";
     console.log(`+ ${teamName(j.a)} x ${teamName(j.b)} (${tag})`);
     criados++;
   }
