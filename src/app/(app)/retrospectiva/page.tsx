@@ -1,0 +1,137 @@
+import Link from "next/link";
+import { db } from "@/lib/db";
+import { requireApprovedUser } from "@/lib/auth";
+import { getActiveEdition, POOL_MATCH_FILTER } from "@/lib/queries";
+import { computeAwards, computeCuriosidades, computeSummary, RetroUser } from "@/lib/retro";
+import { RetroCards, DisplayCard } from "@/components/retro-awards";
+import { scorePrediction } from "@/lib/scoring";
+
+export const dynamic = "force-dynamic";
+
+export default async function RetrospectivaPage() {
+  await requireApprovedUser();
+  const edition = await getActiveEdition();
+  if (!edition) return <p className="text-center text-slate-500">Nenhuma edição ativa.</p>;
+
+  const parts = await db.participation.findMany({
+    where: { editionId: edition.id, user: { status: "APPROVED" } },
+    include: {
+      user: {
+        select: {
+          name: true,
+          predictions: {
+            where: {
+              match: {
+                editionId: edition.id,
+                scoreA: { not: null },
+                scoreB: { not: null },
+                ...POOL_MATCH_FILTER,
+              },
+            },
+            include: { match: true },
+          },
+        },
+      },
+    },
+  });
+
+  const users: RetroUser[] = parts.map((p) => ({
+    name: p.user.name,
+    championPick: p.championPick,
+    points: p.points,
+    predictions: p.user.predictions.map((pr) => {
+      const r = scorePrediction(pr.scoreA, pr.scoreB, pr.match.scoreA!, pr.match.scoreB!);
+      return {
+        matchId: pr.matchId,
+        teamA: pr.match.teamA,
+        teamB: pr.match.teamB,
+        phase: pr.match.phase,
+        scoreA: pr.scoreA,
+        scoreB: pr.scoreB,
+        realA: pr.match.scoreA!,
+        realB: pr.match.scoreB!,
+        points: r.points,
+        isExact: r.isExact,
+        isOutcome: r.isOutcome,
+      };
+    }),
+  }));
+
+  const finished = await db.match.findMany({
+    where: { editionId: edition.id, scoreA: { not: null }, scoreB: { not: null } },
+    select: { teamA: true, teamB: true, phase: true },
+  });
+
+  const resumo = computeSummary(users);
+  const awards = computeAwards(users, edition.championTeam);
+  const curiosidades = computeCuriosidades(users, finished, edition.championTeam);
+
+  // Prêmios e curiosidades juntos, no mesmo estilo de caixa colorida.
+  const cards: DisplayCard[] = [
+    ...awards.map((a) => ({ emoji: a.emoji, title: a.title, headline: a.winner, sub: a.detail })),
+    ...(resumo.placarMaisComum
+      ? [{ emoji: "🎯", title: "Placar mais palpitado", headline: resumo.placarMaisComum }]
+      : []),
+    ...curiosidades.map((c) => ({ emoji: c.emoji, title: c.title, headline: c.value })),
+  ];
+
+  return (
+    <div className="-mt-4 flex flex-col gap-6">
+      {/* Cabeçalho festivo */}
+      <header className="-mx-4 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 px-6 py-10 text-center text-white">
+        <p className="text-sm font-semibold uppercase tracking-widest text-emerald-200">
+          Retrospectiva
+        </p>
+        <h1 className="mt-1 text-3xl font-black leading-tight">
+          Copa do Mundo 2026 🏆
+        </h1>
+        <p className="mt-2 text-sm text-emerald-100">
+          Os melhores momentos (e os furos) do bolão
+        </p>
+      </header>
+
+      {/* Números do grupo */}
+      <section className="grid grid-cols-3 gap-3">
+        {[
+          { n: resumo.participantes, l: "participantes", e: "👥" },
+          { n: resumo.totalPalpites, l: "palpites", e: "✍️" },
+          { n: resumo.totalExatos, l: "placares exatos", e: "🎯" },
+        ].map((s) => (
+          <div
+            key={s.l}
+            className="flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-3 text-center"
+          >
+            <span className="text-xl">{s.e}</span>
+            <span className="text-2xl font-black text-emerald-700">{s.n}</span>
+            <span className="text-[11px] leading-tight text-slate-500">{s.l}</span>
+          </div>
+        ))}
+      </section>
+
+      {/* Prêmios + curiosidades — 3 por página, com rolagem que encaixa */}
+      <section className="flex flex-col gap-1">
+        <h2 className="text-lg font-bold">🏅 Prêmios e curiosidades do bolão</h2>
+        {cards.length === 0 ? (
+          <p className="mt-3 rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
+            Os destaques aparecerão conforme os resultados forem saindo.
+          </p>
+        ) : (
+          <RetroCards cards={cards} />
+        )}
+      </section>
+
+      <Link
+        href="/cerimonia"
+        className="rounded-2xl bg-amber-400 px-4 py-4 text-center text-base font-bold text-amber-950 shadow-sm"
+      >
+        🎉 Ver a cerimônia de premiação →
+      </Link>
+      <Link
+        href="/feedback"
+        className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700"
+      >
+        💬 Deixe seu feedback do bolão
+      </Link>
+    </div>
+  );
+}

@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
 import { Alerts } from "@/components/alerts";
 import { TEAMS, teamName } from "@/lib/teams";
+import { RetroBanner } from "@/components/retro-banner";
 import { isOpenForPredictions, PREDICTION_WINDOW_DAYS } from "@/lib/match-status";
 import { formatTime, formatDateTime, parisDayKey, parisDayLabel } from "@/lib/dates";
 
@@ -45,6 +46,7 @@ export default async function PalpitesPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <RetroBanner />
       <div>
         <h1 className="text-xl font-bold">Meus palpites</h1>
         <p className="text-sm text-slate-500">
