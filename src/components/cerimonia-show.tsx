@@ -19,7 +19,7 @@ function Colocacao({
   tamNome: string;
 }) {
   return (
-    <Reveal className="flex min-h-[62vh] flex-col items-center justify-center gap-2 text-center">
+    <Reveal className="flex min-h-[42vh] flex-col items-center justify-center gap-2 text-center">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{rotulo}</p>
       <div className="text-6xl">{medal}</div>
       <p className={`font-black leading-tight text-slate-900 ${tamNome}`}>{row.name}</p>
@@ -43,7 +43,7 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
       {confete && <Confetti />}
 
       {/* Abertura */}
-      <section className="flex min-h-[64vh] flex-col items-center justify-center gap-3 text-center">
+      <section className="flex min-h-[56vh] flex-col items-center justify-center gap-3 text-center">
         <div className="text-6xl">🏆</div>
         <h1 className="text-3xl font-black leading-tight">
           {encerrado ? "Cerimônia de premiação" : "Pódio parcial"}
@@ -61,7 +61,7 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
       {primeiro && (
         <Reveal
           onShow={() => setConfete(true)}
-          className="flex min-h-[70vh] flex-col items-center justify-center gap-2 text-center"
+          className="flex min-h-[48vh] flex-col items-center justify-center gap-2 text-center"
         >
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">
             {encerrado ? "🎉 Grande campeão" : "👑 Líder atual"}
@@ -73,7 +73,7 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
       )}
 
       {/* Pódio final */}
-      <Reveal className="flex min-h-[72vh] flex-col items-center justify-center gap-5">
+      <Reveal className="flex min-h-[46vh] flex-col items-center justify-center gap-5 pt-4">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">O pódio</p>
         <div className="flex w-full items-end justify-center gap-2 px-2">
           {degraus.map((s, i) =>
@@ -96,7 +96,7 @@ export function CerimoniaShow({ rows, encerrado }: { rows: Row[]; encerrado: boo
       </Reveal>
 
       {/* Fecho */}
-      <Reveal className="flex flex-col items-center gap-4 py-10 text-center">
+      <Reveal className="flex flex-col items-center gap-4 pb-8 pt-2 text-center">
         {!encerrado && (
           <p className="mx-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             ⏳ A Copa ainda não acabou — este é o pódio parcial. A cerimônia

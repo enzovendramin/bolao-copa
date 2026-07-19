@@ -102,14 +102,18 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
     });
   }
 
-  // 🔮 Nostradamus — mais placares exatos
-  const nostra = extremos(users, exactCount, 1);
-  if (nostra && nostra.valor > 0) {
+  // 🧊 O Rei do Empate — mais empates previstos com sucesso
+  const empate = extremos(
+    users,
+    (u) => u.predictions.filter((p) => p.scoreA === p.scoreB && p.realA === p.realB).length,
+    1
+  );
+  if (empate && empate.valor > 0) {
     awards.push({
-      emoji: "🔮",
-      title: "O Nostradamus",
-      winner: juntar(nostra.nomes),
-      detail: `${nostra.valor} ${nostra.valor === 1 ? "placar exato" : "placares exatos"} cravados`,
+      emoji: "🧊",
+      title: "O Rei do Empate",
+      winner: juntar(empate.nomes),
+      detail: `${empate.valor} ${empate.valor === 1 ? "empate previsto" : "empates previstos"} com sucesso`,
     });
   }
 
@@ -201,18 +205,14 @@ export function computeAwards(users: RetroUser[], championTeam: string | null): 
     });
   }
 
-  // 🧊 O Rei do Empate — mais empates previstos com sucesso
-  const empate = extremos(
-    users,
-    (u) => u.predictions.filter((p) => p.scoreA === p.scoreB && p.realA === p.realB).length,
-    1
-  );
-  if (empate && empate.valor > 0) {
+  // 🔮 Nostradamus — mais placares exatos
+  const nostra = extremos(users, exactCount, 1);
+  if (nostra && nostra.valor > 0) {
     awards.push({
-      emoji: "🧊",
-      title: "O Rei do Empate",
-      winner: juntar(empate.nomes),
-      detail: `${empate.valor} ${empate.valor === 1 ? "empate previsto" : "empates previstos"} com sucesso`,
+      emoji: "🔮",
+      title: "O Nostradamus",
+      winner: juntar(nostra.nomes),
+      detail: `${nostra.valor} ${nostra.valor === 1 ? "placar exato" : "placares exatos"} cravados`,
     });
   }
 
@@ -404,7 +404,7 @@ export function computeCuriosidades(
     cur.push({
       emoji: "🌪️",
       title: "O palpite mais fora da realidade",
-      value: `${fora.nome} cravou ${teamName(fora.p.teamA)} ${fora.p.scoreA}×${fora.p.scoreB} ${teamName(fora.p.teamB)} — e deu ${fora.p.realA}×${fora.p.realB}`,
+      value: `${fora.nome} chutou ${teamName(fora.p.teamA)} ${fora.p.scoreA}×${fora.p.scoreB} ${teamName(fora.p.teamB)} — e deu ${fora.p.realA}×${fora.p.realB}`,
     });
   }
 
