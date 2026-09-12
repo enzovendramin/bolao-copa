@@ -1,164 +1,161 @@
-# 🏆 Club Brésil – Bolão da Copa
+# 🏆 World Cup 2026 Prediction Pool
 
-Plataforma privada de bolão da Copa do Mundo 2026 para ~20–50 participantes.
-Mobile-first, em português do Brasil, pensada para usuários não técnicos.
+Private prediction-pool web app built for the 2026 FIFA World Cup and run live
+for **32 participants** across **two independent production instances**
+(France and Brazil) from a single codebase.
 
-## Como rodar
+**Stack:** Next.js 15 (App Router, Server Components + Server Actions) · React 19 ·
+TypeScript · Tailwind CSS 4 · Prisma 6 · PostgreSQL (Neon) · Vercel
+
+The UI is in Brazilian Portuguese, the participants' language. The original
+Portuguese documentation is kept in [docs/README.pt-BR.md](docs/README.pt-BR.md).
+
+## Highlights
+
+- **One codebase, two deployments.** Time zone, scoring rules, knockout-phase
+  eligibility and analytics are all driven by environment variables; the two
+  production branches differ only in their Vercel region (see [DEPLOY.md](DEPLOY.md)).
+- **~85% latency reduction** (2.2 s → 0.3 s per page) by pinning serverless
+  functions to the same region as the database and using pooled Postgres connections.
+- **13 production releases during the live tournament, zero downtime**, using
+  per-branch preview deployments, database-free tests on the scoring engine and
+  idempotent, region-locked data scripts.
+- **Custom auth and admin back-office**: JWT cookie sessions, bcrypt, login rate
+  limiting, security headers; user approval, fixtures, results and full re-scoring.
+- **Deterministic scoring/ranking engine** with a cascading tie-break and points
+  materialised at result entry, so every read (ranking, podium, history) is a plain query.
+
+## Run locally
 
 ```bash
-npm install                          # instala dependências (gera o Prisma Client)
-npx prisma db push                   # cria o banco SQLite (prisma/dev.db)
-npm run db:seed                      # cria edição 2026 e o admin
-npx tsx scripts/seed-copa-2026.ts    # carrega a tabela real da fase de grupos (72 jogos)
+npm install
+cp .env.example .env                 # set DATABASE_URL, DIRECT_URL, AUTH_SECRET
+npx prisma db push
+npm run db:seed                      # edition + admin user (admin / admin123)
+npx tsx scripts/seed-copa-2026.ts    # 72 group-stage fixtures
 npm run dev                          # http://localhost:3000
 ```
 
-Todos os horários do sistema são exibidos no **horário da França (Europe/Paris)**,
-onde mora a maioria dos participantes. Datas armazenadas em UTC.
+Times are stored in UTC and displayed/entered in `APP_TZ` (default `Europe/Paris`).
 
-**Acesso do administrador (seed):** usuário `admin` / senha `admin123`
-⚠️ Troque a senha do admin e o `AUTH_SECRET` do `.env` antes de ir para produção.
+## Architecture
 
----
-
-## Arquitetura
-
-### Stack
-
-| Camada | Escolha | Por quê |
+| Layer | Choice | Why |
 |---|---|---|
-| Framework | **Next.js 15 (App Router)** | Um único projeto para frontend + backend (Server Components + Server Actions). Sem API separada para manter, deploy de um artefato só. |
-| Linguagem | **TypeScript** | Segurança de tipos nas regras de pontuação e nos formulários. |
-| Estilo | **Tailwind CSS 4** | Design system consistente sem dependência de bibliotecas de componentes pesadas. |
-| Banco | **SQLite via Prisma** | Para 20–50 usuários é mais que suficiente, custo zero, backup = copiar um arquivo. O Prisma permite trocar para PostgreSQL mudando 2 linhas se o grupo crescer. |
-| Autenticação | **Cookie JWT próprio (jose + bcryptjs)** | Sem serviços externos, sem custo, sem complexidade de OAuth. Login por nome de usuário + senha (sem e-mail — não há envio de e-mails no sistema; quem esquecer a senha pede reset ao admin). Cookie httpOnly + SameSite=Lax. |
-| Bandeiras | **Emoji nativo** | Zero assets para manter, renderização perfeita em celulares (onde o app será mais usado). |
+| Framework | Next.js 15 (App Router) | One project for frontend and backend; Server Actions replace a separate REST API, so there is a single artefact to build and deploy. |
+| Language | TypeScript | Type safety on scoring rules and form handling. |
+| Styling | Tailwind CSS 4 | Consistent design without a heavy component library; ~100 kB of client JS in total. |
+| Database | PostgreSQL (Neon) via Prisma | Managed Postgres with a pooled connection for the app and a direct one for migrations. SQLite was used only for the initial prototype. |
+| Auth | Own JWT cookie (`jose` + `bcryptjs`) | No external provider, no e-mail flow. Username + password; forgotten passwords are reset by the admin. `httpOnly` + `SameSite=Lax`. |
+| Flags | Images (flagcdn.com) | Flag emojis do not render on Windows; images look identical everywhere. |
 
-### Decisões importantes (e justificativas)
+### Design decisions
 
-0. **Liberação de palpites em ondas.**
-   Para a tela de palpites não ficar lotada, cada jogo abre para palpites
-   automaticamente **7 dias antes** da partida. O admin pode forçar
-   "Liberar agora" ou "Bloquear" por jogo no painel (Admin → Jogos).
+1. **Match status is derived, never stored.**
+   `OPEN` (before kickoff) → `CLOSED` (after kickoff) → `FINISHED` (official score entered).
+   Predictions lock exactly at kickoff without any cron job, queue or admin
+   action: every read and write simply compares `now >= kickoff`. Fewer moving
+   parts, fewer bugs.
 
-1. **Status do jogo é derivado, nunca armazenado.**
-   `ABERTO` (antes do horário) → `FECHADO` (após o horário) → `FINALIZADO` (com placar oficial).
-   Isso garante o **bloqueio automático de palpites exatamente no horário de início** sem nenhum cron job, fila ou ação do administrador — o servidor simplesmente compara `agora >= kickoff` em toda leitura e escrita. Menos partes móveis = menos bugs e menos custo.
+2. **Predictions open in waves.**
+   Each match opens for predictions 7 days before kickoff so the predictions
+   screen never shows the whole tournament at once. The admin can force a match
+   open or closed.
 
-2. **Server Actions em vez de API REST.**
-   Todos os formulários (login, palpites, admin) enviam direto para funções do servidor. Quase zero JavaScript no cliente (~100 kB no total), o que torna o app rápido em celulares com conexão ruim. A validação de segurança acontece sempre no servidor (`requireApprovedUser`, `requireAdmin`).
+3. **Server Actions instead of a REST API.**
+   Every form (login, predictions, admin) posts straight to a server function.
+   Authorisation (`requireApprovedUser`, `requireAdmin`) is re-checked on the
+   server for every mutation; the client is never trusted. Predictions for
+   matches that have already started are ignored even if the form is forged.
 
-3. **Pontuação calculada e materializada no momento do resultado.**
-   Regras: placar exato = **5 pts** · acertou vencedor/empate = **2 pts** · errou = **0**.
-   Há ainda o **Chute do Campeão**: cada participante aposta em qual seleção (qualquer uma)
-   será campeã; acertar vale **10 pts**, creditados quando o admin define a campeã no
-   painel de Resultados. Por padrão o chute é editável durante toda a fase de grupos e
-   trava automaticamente quando o primeiro jogo de mata-mata cadastrado começa; o admin
-   pode forçar travar/liberar a qualquer momento no painel de Resultados.
-   Quando o admin salva um placar oficial: (a) cada palpite daquele jogo é pontuado e gravado; (b) os totais por participante são recalculados; (c) as posições são reatribuídas guardando a posição anterior para a evolução (⬆ ⬇ ➖). Leituras (ranking, pódio) ficam triviais e rápidas.
+4. **Points are computed and materialised when a result is entered.**
+   Rules (defaults, configurable via `SCORE_EXACT` / `SCORE_OUTCOME` / `SCORE_CHAMPION`):
+   exact score **5**, correct outcome **2**, miss **0**, plus a **champion pick**
+   worth **10** credited when the admin sets the champion. Saving an official
+   score (a) scores and stores every prediction for that match, (b) recomputes
+   per-participant totals, (c) reassigns positions while keeping the previous
+   one for the ⬆ ⬇ ➖ trend. Reads stay trivial.
 
-4. **Empates sem desempate (classificação por competição).**
-   Mesma pontuação ⇒ mesma posição: `1º, 1º, 3º` (o 2º é pulado), exatamente como a especificação pede.
+5. **Cascading tie-break; full ties share a position.**
+   Order: points → exact scores → correct outcomes. Participants tied on
+   everything share the position (`1st, 1st, 3rd` — competition ranking).
 
-5. **Visibilidade de palpites controlada no servidor.**
-   Participantes só veem palpites alheios em páginas que filtram `kickoff <= agora` (Histórico). O admin tem uma tela própria que mostra tudo, inclusive de jogos abertos.
+6. **Champion pick locks itself.**
+   Editable during the group stage, locked automatically at the kickoff of the
+   first knockout match. The admin can override the lock either way.
 
-6. **Múltiplas edições desde o schema.**
-   `Edition` ↔ `Participation` ↔ `Match` já separam tudo por edição. Hoje só existe "Copa do Mundo 2026" (ativa); criar 2030 será inserir uma linha e ativá-la.
+7. **Which matches count is a per-instance rule.**
+   In the group stage only matches involving one of the pool's six teams
+   (🇧🇷 🇦🇷 🇫🇷 🇪🇸 🇩🇪 🇵🇹) count. From the phase set in `OPEN_FROM_PHASE`
+   (default: round of 16) every knockout match counts. All other fixtures are
+   still listed in the schedule (by day or as a bracket) without predictions.
 
-7. **Jogos considerados + Agenda.**
-   Jogos com ao menos uma seleção do bolão (🇧🇷 🇦🇷 🇫🇷 🇪🇸 🇩🇪 🇵🇹) valem palpite e pontos.
-   O admin também pode cadastrar **qualquer outro jogo da Copa** — esses entram apenas na
-   aba **Agenda** (consulta dia a dia, com horários e placares), sem palpites nem pontuação.
+8. **Prediction visibility is enforced server-side.**
+   Participants only see other people's predictions on pages that filter
+   `kickoff <= now`. The admin has a separate view of everything.
 
-8. **Mata-mata / pênaltis.**
-   O admin registra somente o placar do tempo regulamentar + prorrogação. Pênaltis não existem no modelo — empate continua empate, como a regra exige.
+9. **Multiple editions from day one.**
+   `Edition` ↔ `Participation` ↔ `Match` scope everything by edition. Running a
+   2030 pool means inserting one row and activating it.
 
-### Modelagem de dados
+10. **Knockout matches: regular time + extra time only.**
+    Penalty shoot-outs are not modelled; a draw stays a draw for scoring.
 
-```
-User (nome, usuário, senha-hash, role: ADMIN|PARTICIPANT, status: PENDING|APPROVED)
- └─ Participation (por edição: pontos, exatos, acertos, posição, posição anterior)
- └─ Prediction (palpite: gols A/B + pontos materializados; única por usuário+jogo)
-Edition (Copa 2026, ativa)
- └─ Match (seleção A/B em código ISO, data/hora UTC, fase, placar oficial nullable)
-```
-
-### Estrutura de telas e fluxos
-
-```
-/                  Página pública (sem login): pódio, ranking, resultados
-/entrar /cadastro  Autenticação
-/aguardando        Conta criada, aguardando aprovação do admin
-/inicio            Próximo jogo · palpites pendentes · pódio · ranking resumido
-/palpites          Todos os jogos abertos, "Salvar todos os palpites"
-/ranking           Pódio + tabela completa (pos, nome, pts, 🎯, ✔, evolução)
-/historico         Jogos encerrados: resultado, seu palpite, pontos, palpites de todos
-/agenda            Todos os jogos cadastrados, dia a dia (inclusive os sem palpite)
-/admin             Aprovar/rejeitar/remover participantes
-/admin/jogos       Criar/editar/excluir jogos
-/admin/resultados  Lançar placar oficial (recalcula tudo automaticamente)
-/admin/palpites    Todos os palpites de todos
-```
-
-**Fluxo do participante:** cria conta → aguarda aprovação → recebe acesso → preenche placares na tela de palpites (inputs grandes, teclado numérico, um botão salva tudo) → acompanha pódio/ranking.
-
-**Fluxo do administrador:** aprova solicitações → cadastra jogos → após cada partida lança o placar → pontuação, ranking e evolução são recalculados na hora.
-
-### Wireframe conceitual (mobile)
+### Data model
 
 ```
-┌──────────────────────────┐   ┌──────────────────────────┐
-│ 🏆 Club Brésil      Sair │   │ Meus palpites            │
-│──────────────────────────│   │ ┌──────────────────────┐ │
-│ Olá, João! Você está em  │   │ │ Grupos · 13/06 19:00 │ │
-│ 2º lugar com 12 pontos.  │   │ │  🇧🇷      ×      🇲🇦  │ │
-│ ┌──────────────────────┐ │   │ │ Brasil [2] [0] Marr. │ │
-│ │ PRÓXIMO JOGO         │ │   │ └──────────────────────┘ │
-│ │   🇧🇷    ×    🇲🇦     │ │   │ ┌──────────────────────┐ │
-│ │ sáb 13/06 às 19:00   │ │   │ │ ... mais jogos ...   │ │
-│ └──────────────────────┘ │   │ └──────────────────────┘ │
-│ ⚠ 3 palpites pendentes → │   │ ┌──────────────────────┐ │
-│ ┌─────── PÓDIO ────────┐ │   │ │ Salvar todos os      │ │
-│ │   🥈   🥇   🥉       │ │   │ │     palpites         │ │
-│ │  Ana  João  Bia      │ │   │ └──────────────────────┘ │
-│ └──────────────────────┘ │   │                          │
-│ 🏠   ⚽   🏆   📋        │   │ 🏠   ⚽   🏆   📋        │
-└──────────────────────────┘   └──────────────────────────┘
+User (name, username, password hash, role: ADMIN|PARTICIPANT, status: PENDING|APPROVED)
+ └─ Participation (per edition: points, exact, outcomes, position, previous position, champion pick)
+ └─ Prediction (goals A/B + materialised points; unique per user + match)
+ └─ Feedback (per edition: what worked, what to improve)
+Edition (World Cup 2026, active; champion team; champion-pick lock override)
+ └─ Match (team A/B as ISO codes, kickoff in UTC, phase, official score nullable, prediction override)
 ```
 
-### Segurança
+### Routes
 
-- Senhas com bcrypt (custo 10); sessão JWT assinada em cookie httpOnly.
-- Middleware bloqueia rotas privadas sem sessão; layouts verificam aprovação e papel de admin no banco.
-- Toda mutação revalida permissões no servidor (Server Action) — nunca confia no cliente.
-- Palpites de jogos iniciados são ignorados no servidor mesmo se o formulário for forjado.
-- A página pública não expõe dados privados — apenas nome e pontuação.
-- Senha esquecida: o admin gera uma senha temporária no painel (botão "Nova senha").
-
----
-
-## Implantação
-
-### Opção recomendada (custo ~zero): VPS ou Fly.io/Railway com volume
-
-SQLite precisa de disco persistente. Qualquer VPS barato (ou plano hobby do
-Fly.io/Railway) roda o app inteiro:
-
-```bash
-npm run build
-npm start            # porta 3000 (use um reverse proxy com HTTPS)
+```
+/                  Public page (no login): podium, ranking, results
+/entrar /cadastro  Sign in / sign up
+/aguardando        Account created, awaiting admin approval
+/inicio            Next match · pending predictions · podium · ranking summary
+/palpites          All open matches, one "save all" button
+/ranking           Podium + full table (position, name, points, exact, outcomes, trend)
+/historico         Finished matches: result, your prediction, points, everyone's predictions
+/agenda            Every fixture, by day or by phase (bracket)
+/retrospectiva     End-of-tournament awards and statistics
+/cerimonia         Podium with progressive reveal
+/feedback          Participant feedback form
+/senha             Change own password
+/admin             Approve/reject/remove participants, reset passwords
+/admin/jogos       Create/edit/delete fixtures, force predictions open/closed
+/admin/resultados  Enter official scores and the champion (recomputes everything)
+/admin/palpites    Everyone's predictions
+/admin/feedback    Feedback received
 ```
 
-- Defina `AUTH_SECRET` forte e `DATABASE_URL="file:/dados/prod.db"` no ambiente.
-- **Backup = copiar o arquivo `.db`** (um cron diário resolve).
+**Participant flow:** sign up → wait for approval → enter scores on the
+predictions screen (large inputs, numeric keyboard, one save button) → follow the
+podium and ranking.
 
-### Opção serverless: Vercel + Postgres gerenciado (Neon/Supabase, planos gratuitos)
+**Admin flow:** approve requests → register fixtures → enter each result → scores,
+ranking and trend are recomputed immediately.
 
-1. Troque o provider no `prisma/schema.prisma` para `postgresql` e aponte `DATABASE_URL` para o banco.
-2. `npx prisma db push && npm run db:seed`.
-3. Conecte o repositório à Vercel — deploy automático a cada push.
+### Security
 
-### Teste de lógica
+- bcrypt password hashing; signed JWT session in an `httpOnly` cookie.
+- Middleware blocks private routes without a session; layouts check approval and admin role against the database.
+- Every mutation re-validates permissions on the server; the public page exposes only names and scores.
+- Login rate limiting and HTTP security headers.
+- Forgotten password: the admin issues a temporary one from the back-office.
 
-`npx tsx scripts/test-logic.ts` valida pontuação, empates e evolução de posição de ponta a ponta (cria e remove dados de teste).
+## Tests
+
+- `npx tsx scripts/test-rotina.ts` — time zones, prediction window, locks (in memory, no database).
+- `npx tsx scripts/test-retro.ts` — retrospective awards and statistics (pure functions).
+- `npx tsx scripts/test-logic.ts` — scoring, tie-break and position trend end to end (creates and removes its own data; **development database only**).
+
+## Deployment
+
+See [DEPLOY.md](DEPLOY.md): Vercel + Neon, the two-instance setup, environment
+variables and the release process.
