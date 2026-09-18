@@ -1,8 +1,16 @@
-# 🏆 World Cup 2026 Prediction Pool
+# World Cup 2026 Pool Platform
 
-Private prediction-pool web app built for the 2026 FIFA World Cup and run live
-for **32 participants** across **two independent production instances**
-(France and Brazil) from a single codebase.
+![CI](https://github.com/enzovendramin/bolao-copa/actions/workflows/ci.yml/badge.svg)
+
+Multiplayer score-prediction game (bolão) built for the 2026 FIFA World Cup and run live
+for **32 participants** across **two independent production instances** (France and Brazil)
+from a single codebase.
+
+**Status:** ran in production May–July 2026. <!-- add: "Public read-only page: <URL>" if an instance is still up -->
+
+<!-- screenshots: docs/ranking.png and docs/predictions.png, phone width
+<p align="center"><img src="docs/ranking.png" width="280"> <img src="docs/predictions.png" width="280"></p>
+-->
 
 **Stack:** Next.js 15 (App Router, Server Components + Server Actions) · React 19 ·
 TypeScript · Tailwind CSS 4 · Prisma 6 · PostgreSQL (Neon) · Vercel
@@ -151,9 +159,13 @@ ranking and trend are recomputed immediately.
 
 ## Tests
 
-- `npx tsx scripts/test-rotina.ts` — time zones, prediction window, locks (in memory, no database).
-- `npx tsx scripts/test-retro.ts` — retrospective awards and statistics (pure functions).
-- `npx tsx scripts/test-logic.ts` — scoring, tie-break and position trend end to end (creates and removes its own data; **development database only**).
+`npm test` runs the database-free suites (also run in CI on every push):
+
+- `scripts/test-rotina.ts` — time zones, prediction window, locks.
+- `scripts/test-retro.ts` — retrospective awards and statistics (pure functions).
+
+`npx tsx scripts/test-logic.ts` exercises scoring, tie-break and position trend end to end;
+it creates and removes its own data and needs a **development database**.
 
 ## Deployment
 
