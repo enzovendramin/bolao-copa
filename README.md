@@ -6,11 +6,13 @@ Multiplayer score-prediction game (bolão) built for the 2026 FIFA World Cup and
 for **32 participants** across **two independent production instances** (France and Brazil)
 from a single codebase.
 
-**Status:** ran in production May–July 2026. <!-- add: "Public read-only page: <URL>" if an instance is still up -->
+**Status:** ran in production May–July 2026.
 
-<!-- screenshots: docs/ranking.png and docs/predictions.png, phone width
-<p align="center"><img src="docs/ranking.png" width="280"> <img src="docs/predictions.png" width="280"></p>
--->
+<p align="center">
+  <img src="docs/ranking.png" width="290" alt="Ranking page: podium and full table">
+  &nbsp;&nbsp;
+  <img src="docs/agenda.png" width="290" alt="Schedule page by phase, with the matches that count for the pool marked">
+</p>
 
 **Stack:** Next.js 15 (App Router, Server Components + Server Actions) · React 19 ·
 TypeScript · Tailwind CSS 4 · Prisma 6 · PostgreSQL (Neon) · Vercel
